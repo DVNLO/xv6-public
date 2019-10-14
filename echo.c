@@ -1,6 +1,7 @@
 #include "types.h"
 #include "stat.h"
 #include "user.h"
+#include "param.h"
 
 int
 main(int argc, char *argv[])
@@ -9,5 +10,5 @@ main(int argc, char *argv[])
 
   for(i = 1; i < argc; i++)
     printf(1, "%s%s", argv[i], i+1 < argc ? " " : "\n");
-  exit();
+  exit(EXIT_SUCCESS);
 }
