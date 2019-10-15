@@ -29,7 +29,11 @@ sys_exit(void)
 int
 sys_wait(void)
 {
-  return wait();
+  int * status;
+  int rc = argptr(0, (void*)&status, sizeof(status));
+  if(rc < 0)
+    return -1;
+  return wait(status);
 }
 
 int
