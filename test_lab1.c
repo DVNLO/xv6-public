@@ -43,7 +43,6 @@ int exitWait(void)
 	return 0;
 }
 
-/*
 int waitPid(void)
 {
 	int ret_pid;
@@ -109,7 +108,6 @@ int CELEBW02(void)
 	}
 	return 0;
 }
-*/
 
 int main(int argc, char * argv[])
 {
@@ -120,11 +118,11 @@ int main(int argc, char * argv[])
 	}
 	else if (atoi(argv[1]) == 2)
 	{
-		//waitPid();
+		waitPid();
 	}
 	else if (atoi(argv[1]) == 3)
 	{
-		//CELEBW02();
+		CELEBW02();
 	}
 	else
 	{
