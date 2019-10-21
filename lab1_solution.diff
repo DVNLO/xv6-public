@@ -1,0 +1,678 @@
+diff --git a/Makefile b/Makefile
+index 952c66d..3d185a3 100644
+--- a/Makefile
++++ b/Makefile
+@@ -181,6 +181,7 @@ UPROGS=\
+ 	_wc\
+ 	_zombie\
+ 	_test_hello\
++        _test_lab1\
+ 
+ fs.img: mkfs README $(UPROGS)
+ 	./mkfs fs.img README $(UPROGS)
+diff --git a/defs.h b/defs.h
+index 1e70603..6602841 100644
+--- a/defs.h
++++ b/defs.h
+@@ -117,7 +117,8 @@ void            sched(void);
+ void            setproc(struct proc*);
+ void            sleep(void*, struct spinlock*);
+ void            userinit(void);
+-int             wait(void);
++int             wait(int * status);
++int             waitpid(int pid, int * status, int options);
+ void            wakeup(void*);
+ void            yield(void);
+ 
+diff --git a/forktest.c b/forktest.c
+index b0fe61e..a5c6ce2 100644
+--- a/forktest.c
++++ b/forktest.c
+@@ -35,13 +35,13 @@ forktest(void)
+   }
+ 
+   for(; n > 0; n--){
+-    if(wait() < 0){
++    if(wait(NULL) < 0){
+       printf(1, "wait stopped early\n");
+       exit(EXIT_FAILURE);
+     }
+   }
+ 
+-  if(wait() != -1){
++  if(wait(NULL) != -1){
+     printf(1, "wait got too many\n");
+     exit(EXIT_FAILURE);
+   }
+diff --git a/init.c b/init.c
+index 646d00c..7b10b80 100644
+--- a/init.c
++++ b/init.c
+@@ -32,7 +32,7 @@ main(void)
+       printf(1, "init: exec sh failed\n");
+       exit(EXIT_FAILURE);
+     }
+-    while((wpid=wait()) >= 0 && wpid != pid)
++    while((wpid=wait(NULL)) >= 0 && wpid != pid)
+       printf(1, "zombie!\n");
+   }
+ }
+diff --git a/param.h b/param.h
+index 60d0e98..ccd3688 100644
+--- a/param.h
++++ b/param.h
+@@ -11,6 +11,7 @@
+ #define LOGSIZE      (MAXOPBLOCKS*3)  // max data blocks in on-disk log
+ #define NBUF         (MAXOPBLOCKS*3)  // size of disk block cache
+ #define FSSIZE       1000  // size of file system in blocks
+-#define EXIT_SUCCESS 0  // UCR CS 153 DAN VYENIELO 
+-#define EXIT_FAILURE 1  // UCR CS 153 DAN VYENIELO
+-
++#define EXIT_SUCCESS 0  
++#define EXIT_FAILURE 1  
++#define NULL ((void *)0)
++#define WNOHANG 1      
+diff --git a/proc.c b/proc.c
+index 341cbcd..4c36158 100644
+--- a/proc.c
++++ b/proc.c
+@@ -271,7 +271,7 @@ exit(int status)
+ // Wait for a child process to exit and return its pid.
+ // Return -1 if this process has no children.
+ int
+-wait(void)
++wait(int * status)
+ {
+   struct proc *p;
+   int havekids, pid;
+@@ -296,6 +296,10 @@ wait(void)
+         p->name[0] = 0;
+         p->killed = 0;
+         p->state = UNUSED;
++        if(status)
++        {
++          *status = p->exit_status;
++        }
+         release(&ptable.lock);
+         return pid;
+       }
+@@ -303,6 +307,10 @@ wait(void)
+ 
+     // No point waiting if we don't have any children.
+     if(!havekids || curproc->killed){
++      if(status)
++      {
++        *status = -1;
++      }
+       release(&ptable.lock);
+       return -1;
+     }
+@@ -312,6 +320,64 @@ wait(void)
+   }
+ }
+ 
++// Wait for a process with arg pid to exit and return its pid.
++// Return -1 if this process has no arg pid child. 
++int
++waitpid(int pid, int * status, int options)
++{
++  struct proc *p;
++  int haspid;
++  struct proc *curproc = myproc();
++  
++  acquire(&ptable.lock);
++  for(;;){
++    // Scan through table looking for exited pid.
++    haspid = 0;
++    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
++      if(p->pid != pid)
++        continue;
++      haspid = 1;
++      if(p->state == ZOMBIE){
++        // Found one.
++        kfree(p->kstack);
++        p->kstack = 0;
++        freevm(p->pgdir);
++        p->pid = 0;
++        p->parent = 0;
++        p->name[0] = 0;
++        p->killed = 0;
++        p->state = UNUSED;
++        if(status) {
++          *status = p->exit_status;
++        }
++        release(&ptable.lock);
++        return pid;
++      }
++    }
++    
++    // No point waiting if we don't have any pid child.
++    if(!haspid || curproc->killed){
++      if(status) {
++        *status = -1;
++      }
++      release(&ptable.lock);
++      return -1;
++    }
++
++    // if has the arg pid kid && WNOHANG is enabled
++    // set status to 0 and return 0.
++    if(haspid && (options & WNOHANG)) {
++      if(status) {
++        *status = 0;
++      }
++      release(&ptable.lock);
++      return 0;
++    }
++
++    sleep(curproc, &ptable.lock);  //DOC: wait-sleep
++  }
++}
++
+ //PAGEBREAK: 42
+ // Per-CPU process scheduler.
+ // Each CPU calls scheduler() after setting itself up.
+diff --git a/sh.c b/sh.c
+index 2af57fd..fb49b08 100644
+--- a/sh.c
++++ b/sh.c
+@@ -94,7 +94,7 @@ runcmd(struct cmd *cmd)
+     lcmd = (struct listcmd*)cmd;
+     if(fork1() == 0)
+       runcmd(lcmd->left);
+-    wait();
++    wait(NULL);
+     runcmd(lcmd->right);
+     break;
+ 
+@@ -118,8 +118,8 @@ runcmd(struct cmd *cmd)
+     }
+     close(p[0]);
+     close(p[1]);
+-    wait();
+-    wait();
++    wait(NULL);
++    wait(NULL);
+     break;
+ 
+   case BACK:
+@@ -167,7 +167,7 @@ main(void)
+     }
+     if(fork1() == 0)
+       runcmd(parsecmd(buf));
+-    wait();
++    wait(NULL);
+   }
+   exit(EXIT_SUCCESS);
+ }
+diff --git a/stressfs.c b/stressfs.c
+index ca9087f..345853c 100644
+--- a/stressfs.c
++++ b/stressfs.c
+@@ -44,7 +44,7 @@ main(int argc, char *argv[])
+     read(fd, data, sizeof(data));
+   close(fd);
+ 
+-  wait();
++  wait(NULL);
+ 
+   exit(EXIT_SUCCESS);
+ }
+diff --git a/syscall.c b/syscall.c
+index 0af1efd..2f6f749 100644
+--- a/syscall.c
++++ b/syscall.c
+@@ -104,6 +104,7 @@ extern int sys_wait(void);
+ extern int sys_write(void);
+ extern int sys_uptime(void);
+ extern int sys_hello(void);
++extern int sys_waitpid(void);
+ 
+ static int (*syscalls[])(void) = {
+ [SYS_fork]    sys_fork,
+@@ -127,7 +128,8 @@ static int (*syscalls[])(void) = {
+ [SYS_link]    sys_link,
+ [SYS_mkdir]   sys_mkdir,
+ [SYS_close]   sys_close,
+-[SYS_hello]   sys_hello
++[SYS_hello]   sys_hello,
++[SYS_waitpid] sys_waitpid
+ };
+ 
+ void
+diff --git a/syscall.h b/syscall.h
+index 5f48d9b..e0ea067 100644
+--- a/syscall.h
++++ b/syscall.h
+@@ -1,23 +1,24 @@
+ // System call numbers
+-#define SYS_fork    1
+-#define SYS_exit    2
+-#define SYS_wait    3
+-#define SYS_pipe    4
+-#define SYS_read    5
+-#define SYS_kill    6
+-#define SYS_exec    7
+-#define SYS_fstat   8
+-#define SYS_chdir   9
+-#define SYS_dup    10
+-#define SYS_getpid 11
+-#define SYS_sbrk   12
+-#define SYS_sleep  13
+-#define SYS_uptime 14
+-#define SYS_open   15
+-#define SYS_write  16
+-#define SYS_mknod  17
+-#define SYS_unlink 18
+-#define SYS_link   19
+-#define SYS_mkdir  20
+-#define SYS_close  21
+-#define SYS_hello  22
++#define SYS_fork     1
++#define SYS_exit     2
++#define SYS_wait     3
++#define SYS_pipe     4
++#define SYS_read     5
++#define SYS_kill     6
++#define SYS_exec     7
++#define SYS_fstat    8
++#define SYS_chdir    9
++#define SYS_dup     10
++#define SYS_getpid  11
++#define SYS_sbrk    12
++#define SYS_sleep   13
++#define SYS_uptime  14
++#define SYS_open    15
++#define SYS_write   16
++#define SYS_mknod   17
++#define SYS_unlink  18
++#define SYS_link    19
++#define SYS_mkdir   20
++#define SYS_close   21
++#define SYS_hello   22
++#define SYS_waitpid 23
+diff --git a/sysproc.c b/sysproc.c
+index 7e24e40..b28d969 100644
+--- a/sysproc.c
++++ b/sysproc.c
+@@ -29,7 +29,29 @@ sys_exit(void)
+ int
+ sys_wait(void)
+ {
+-  return wait();
++  int * status;
++  int rc = argptr(0, (void*)&status, sizeof(status));
++  if(rc < 0)
++    return -1;
++  return wait(status);
++}
++
++int
++sys_waitpid(void)
++{
++  int pid;
++  int rc = argint(0, &pid);
++  if(rc < 0)
++    return -1;
++  int * status;
++  rc = argptr(1, (void*)&status, sizeof(status));
++  if(rc < 0)
++    return -1;
++  int options;
++  rc = argint(2, &options);
++  if(rc < 0)
++    return -1;
++  return waitpid(pid, status, options);
+ }
+ 
+ int
+diff --git a/test_lab1.c b/test_lab1.c
+new file mode 100644
+index 0000000..8d153b2
+--- /dev/null
++++ b/test_lab1.c
+@@ -0,0 +1,135 @@
++#include "types.h"
++#include "user.h"
++#define WNOHANG 1
++
++int exitWait(void)
++{
++	int pid;
++	int ret_pid;
++	int exit_status;
++	int i;
++	printf(1, "\n  Parts a and b) testing exit(int status) and "
++		      "wait(int* status):\n");
++	for (i = 0; i < 2; i++) 
++	{
++		pid = fork();
++		if (pid == 0) // -> CHILD
++		{
++			if (i == 0)
++			{
++				printf(1, "\n This is child with PID# %d and I will exit with "
++					      "status %d\n", getpid(), 0);
++				exit(0);
++			}
++			else
++			{
++				printf(1, "\nThis is child with PID# %d and I will exit with "
++					      "status %d\n", getpid(), -1);
++				exit(-1);
++			}
++		}
++		else if (pid > 0) // -> PARENT
++		{ 
++			ret_pid = wait(&exit_status);
++			printf(1, "\n This is the parent: child with PID# %d has exited "
++				      "with status %d\n", ret_pid, exit_status);
++		}
++		else  // -> fork() ERROR
++		{
++			printf(2, "\nError using fork\n");
++			exit(-1);
++		}
++	}
++	return 0;
++}
++
++int waitPid(void)
++{
++	int ret_pid;
++	int exit_status;
++	int i;
++	int pid_a[5] = { 0, 0, 0, 0, 0 };
++	printf(1, "\nPart c) testing waitpid(int pid, int* status, int options):\n");
++	for (i = 0; i < 5; ++i) 
++	{
++		pid_a[i] = fork();
++		if (pid_a[i] == 0)	// -> CHILD
++		{
++			printf(1, "\nThe is child with PID# %d and I will exit with "
++				      "status %d\n", getpid(), getpid() + 4);
++			exit(getpid() + 4);
++		}
++	}
++	for (i = 4; i >= 0; --i)
++	{
++		sleep(5);
++		printf(1, "\nThis is the parent: Now waiting for child with PID# "
++			      "%d\n", pid_a[i]);
++		ret_pid = waitpid(pid_a[i], &exit_status, 0);
++		printf(1, "\nThis is the partent: Child# %d has exited with status %d"
++			      "\n", ret_pid, exit_status);
++	}
++	return 0;
++}
++
++int CELEBW02(void)
++{
++	printf(1, "\n  Part e) the waitpid option WNOHANG, test program CELEBW02 \n");
++	int pid;
++	int retpid;
++	int status;
++	if ((pid = fork()) < 0)
++	{
++		printf(2, "fork() error");
++	}
++	else if (pid == 0)	// -> CHILD 
++	{
++		sleep(5);
++		exit(1);
++	}
++	else
++	{
++		do
++		{
++			if ((retpid = waitpid(pid, &status, WNOHANG)) == -1)
++			{
++				printf(2, "wait() error");
++			}
++			else if (retpid == 0)
++			{
++				printf(1, "child is still running \n");
++				sleep(1);
++			}
++			else
++			{
++				printf(1, "child exited with status of %d\n", status);
++			}
++		} while (retpid == 0);
++	}
++	return 0;
++}
++
++int main(int argc, char * argv[])
++{
++	printf(1, "\n This program tests the correctness of your lab#1\n");
++	if (atoi(argv[1]) == 1)
++	{
++		exitWait();
++	}
++	else if (atoi(argv[1]) == 2)
++	{
++		waitPid();
++	}
++	else if (atoi(argv[1]) == 3)
++	{
++		CELEBW02();
++	}
++	else
++	{
++		printf(1, "\ntype \"lab1 1\" to test exit and wait, \"lab1 2\" to "
++				  "test waitpid and \"lab1 3\" to test the extra credit "
++			      "WNOHANG option \n");
++	}
++	exit(0);
++	return 0;
++}
+diff --git a/user.h b/user.h
+index 3c65090..fccee15 100644
+--- a/user.h
++++ b/user.h
+@@ -4,7 +4,8 @@ struct rtcdate;
+ // system calls
+ int fork(void);
+ int exit(int) __attribute__((noreturn));
+-int wait(void);
++int wait(int *);
++int waitpid(int, int *, int);
+ int pipe(int*);
+ int write(int, const void*, int);
+ int read(int, void*, int);
+diff --git a/usertests.c b/usertests.c
+index 3ec8266..9f715a0 100644
+--- a/usertests.c
++++ b/usertests.c
+@@ -66,7 +66,7 @@ exitiputtest(void)
+     }
+     exit(EXIT_FAILURE);
+   }
+-  wait();
++  wait(NULL);
+   printf(stdout, "exitiput test ok\n");
+ }
+ 
+@@ -109,7 +109,7 @@ openiputtest(void)
+     printf(stdout, "unlink failed\n");
+     exit(EXIT_FAILURE);
+   }
+-  wait();
++  wait(NULL);
+   printf(stdout, "openiput test ok\n");
+ }
+ 
+@@ -346,7 +346,7 @@ pipe1(void)
+       exit(EXIT_FAILURE);
+     }
+     close(fds[0]);
+-    wait();
++    wait(NULL);
+   } else {
+     printf(1, "fork() failed\n");
+     exit(EXIT_FAILURE);
+@@ -394,9 +394,9 @@ preempt(void)
+   kill(pid2);
+   kill(pid3);
+   printf(1, "wait... ");
+-  wait();
+-  wait();
+-  wait();
++  wait(NULL);
++  wait(NULL);
++  wait(NULL);
+   printf(1, "preempt ok\n");
+ }
+ 
+@@ -413,7 +413,7 @@ exitwait(void)
+       return;
+     }
+     if(pid){
+-      if(wait() != pid){
++      if(wait(NULL) != pid){
+         printf(1, "wait wrong pid\n");
+         return;
+       }
+@@ -453,7 +453,7 @@ mem(void)
+     printf(1, "mem ok\n");
+     exit(EXIT_FAILURE);
+   } else {
+-    wait();
++    wait(NULL);
+   }
+ }
+ 
+@@ -486,7 +486,7 @@ sharedfd(void)
+   if(pid == 0)
+     exit(EXIT_FAILURE);
+   else
+-    wait();
++    wait(NULL);
+   close(fd);
+   fd = open("sharedfd", 0);
+   if(fd < 0){
+@@ -552,7 +552,7 @@ fourfiles(void)
+   }
+ 
+   for(pi = 0; pi < 4; pi++){
+-    wait();
++    wait(NULL);
+   }
+ 
+   for(i = 0; i < 2; i++){
+@@ -620,7 +620,7 @@ createdelete(void)
+   }
+ 
+   for(pi = 0; pi < 4; pi++){
+-    wait();
++    wait(NULL);
+   }
+ 
+   name[0] = name[1] = name[2] = 0;
+@@ -794,7 +794,7 @@ concreate(void)
+     if(pid == 0)
+       exit(EXIT_FAILURE);
+     else
+-      wait();
++      wait(NULL);
+   }
+ 
+   memset(fa, 0, sizeof(fa));
+@@ -846,7 +846,7 @@ concreate(void)
+     if(pid == 0)
+       exit(EXIT_FAILURE);
+     else
+-      wait();
++      wait(NULL);
+   }
+ 
+   printf(1, "concreate ok\n");
+@@ -881,7 +881,7 @@ linkunlink()
+   }
+ 
+   if(pid)
+-    wait();
++    wait(NULL);
+   else
+     exit(EXIT_FAILURE);
+ 
+@@ -1397,13 +1397,13 @@ forktest(void)
+   }
+ 
+   for(; n > 0; n--){
+-    if(wait() < 0){
++    if(wait(NULL) < 0){
+       printf(1, "wait stopped early\n");
+       exit(EXIT_FAILURE);
+     }
+   }
+ 
+-  if(wait() != -1){
++  if(wait(NULL) != -1){
+     printf(1, "wait got too many\n");
+     exit(EXIT_FAILURE);
+   }
+@@ -1446,7 +1446,7 @@ sbrktest(void)
+   }
+   if(pid == 0)
+     exit(EXIT_FAILURE);
+-  wait();
++  wait(NULL);
+ 
+   // can one grow address space to something big?
+ #define BIG (100*1024*1024)
+@@ -1506,7 +1506,7 @@ sbrktest(void)
+       kill(ppid);
+       exit(EXIT_FAILURE);
+     }
+-    wait();
++    wait(NULL);
+   }
+ 
+   // if we run the system out of memory, does it clean up the last
+@@ -1533,7 +1533,7 @@ sbrktest(void)
+     if(pids[i] == -1)
+       continue;
+     kill(pids[i]);
+-    wait();
++    wait(NULL);
+   }
+   if(c == (char*)0xffffffff){
+     printf(stdout, "failed sbrk leaked memory\n");
+@@ -1577,7 +1577,7 @@ validatetest(void)
+     sleep(0);
+     sleep(0);
+     kill(pid);
+-    wait();
++    wait(NULL);
+ 
+     // try to crash the kernel by passing in a bad string pointer
+     if(link("nosuchfile", (char*)p) != -1){
+@@ -1632,7 +1632,7 @@ bigargtest(void)
+     printf(stdout, "bigargtest: fork failed\n");
+     exit(EXIT_FAILURE);
+   }
+-  wait();
++  wait(NULL);
+   fd = open("bigarg-ok", 0);
+   if(fd < 0){
+     printf(stdout, "bigarg test failed!\n");
+@@ -1720,7 +1720,7 @@ uio()
+     printf (1, "fork failed\n");
+     exit(EXIT_FAILURE);
+   }
+-  wait();
++  wait(NULL);
+   printf(1, "uio test done\n");
+ }
+ 
+diff --git a/usys.S b/usys.S
+index 0072273..49e4882 100644
+--- a/usys.S
++++ b/usys.S
+@@ -30,3 +30,4 @@ SYSCALL(sbrk)
+ SYSCALL(sleep)
+ SYSCALL(uptime)
+ SYSCALL(hello)
++SYSCALL(waitpid)
