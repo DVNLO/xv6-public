@@ -88,6 +88,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->priority = 10;
 
   release(&ptable.lock);
 
@@ -311,6 +312,35 @@ wait(void)
   }
 }
 
+int
+setpriority(int priority_value)
+{
+  struct proc * p = myproc();
+  acquire(&ptable.lock);
+  int rc = p->priority = priority_value;
+  release(&ptable.lock);
+  return rc;
+}
+
+inline
+void
+switch_to_selected_process(struct proc * p, struct cpu * c)
+{
+  // Switch to chosen process.  It is the process's job
+  // to release ptable.lock and then reacquire it
+  // before jumping back to us.
+  c->proc = p;
+  switchuvm(p);
+  p->state = RUNNING;
+
+  swtch(&(c->scheduler), p->context);
+  switchkvm();
+
+  // Process is done running for now.
+  // It should have changed its p->state before coming back.
+  c->proc = 0;
+}
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -330,28 +360,32 @@ scheduler(void)
     // Enable interrupts on this processor.
     sti();
 
-    // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
-
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
-
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
+    struct proc * next_p = ptable.proc;
+    // Search for the first RUNNABLE process
+    while(next_p < &ptable.proc[NPROC]
+          && next_p->state != RUNNABLE)
+    {
+      ++next_p;
+    }
+    // Search for a higher priority RUNNABLE process
+    p = next_p + 1;
+    while(p < &ptable.proc[NPROC])
+    {
+      if(p->state == RUNNABLE 
+         && p->priority < next_p->priority)
+      {
+        //cprintf("p->priority == %d && next_p->priority == %d\n", p->priority, next_p->priority);
+        next_p = p;
+      }
+      ++p;
+    }
+    if(next_p >= ptable.proc 
+       && next_p < &ptable.proc[NPROC])
+    {
+      switch_to_selected_process(next_p, c);
     }
     release(&ptable.lock);
-
   }
 }
 
