@@ -1,16 +1,58 @@
 #include "types.h"
 #include "user.h"
 
+
+void test_priority_aging()
+{
+  printf(1, "test_priority_aging()\n");
+  int pid1 = fork();
+  if(!pid1)
+  {
+    int pid2 = fork();
+    int priority_val = 0;
+    if(!pid2)
+    {
+      setpriority(priority_val);
+      printf(1, "child 2 completes\n");
+    }
+    else if(pid2 > 0)
+    {
+      setpriority(priority_val);
+      int volatile i = 0;
+      while(i >= 0)
+        ++i;
+      printf(1, "child 1 completes\n");
+      wait();
+    }
+    else
+    {
+      printf(2, "Error\n");
+    }
+  }
+  else if(pid1 > 0)
+  {
+    wait();
+    wait();
+    printf(1, "parent completes\n");
+  }
+  else
+  {
+    printf(2, "Error\n");
+  }
+}
+
 int main(int argc, char *argv[])
 {
-  int PScheduler(void);
+  void PScheduler(void);
   printf(1, "\n This program tests the correctness of your lab#2\n");
   PScheduler();
+  test_priority_aging();
+  exit();
   return 0;
 }
   
     
-int PScheduler(void)
+void PScheduler(void)
 {
     // use this part to test the priority scheduler. Assuming that the priorities range between range between 0 to 31
     // 0 is the highest priority and 31 is the lowest priority.  
@@ -56,6 +98,4 @@ int PScheduler(void)
     }
     printf(1,"\n if processes with highest priority finished first then its correct \n");
   }
-  exit();		
-  return 0;
 }

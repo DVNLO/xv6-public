@@ -278,6 +278,7 @@ wait(void)
   struct proc *curproc = myproc();
   
   acquire(&ptable.lock);
+  --curproc->priority;	// increase priority waiting process 
   for(;;){
     // Scan through table looking for exited children.
     havekids = 0;
@@ -331,8 +332,10 @@ switch_to_selected_process(struct proc * p, struct cpu * c)
   // before jumping back to us.
   c->proc = p;
   switchuvm(p);
+   
   p->state = RUNNING;
-
+  ++p->priority;  // Decrease priority of a run process.
+ 
   swtch(&(c->scheduler), p->context);
   switchkvm();
 
@@ -375,7 +378,6 @@ scheduler(void)
       if(p->state == RUNNABLE 
          && p->priority < next_p->priority)
       {
-        //cprintf("p->priority == %d && next_p->priority == %d\n", p->priority, next_p->priority);
         next_p = p;
       }
       ++p;
