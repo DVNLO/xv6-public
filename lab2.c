@@ -2,6 +2,36 @@
 #include "user.h"
 
 
+void test_priority_inheritance()
+{
+  printf(1,"test_priority_inheritance\n");
+  int parent_priority = 2;
+  if(setpriority(parent_priority) != parent_priority)
+  {
+    printf(2, "Error setting parent priority\n");
+    exit();
+  }
+  int pid = fork();
+  //int priority = getpriority();
+  if(!pid)
+  {
+    int child_priority = getpriority();
+    printf(1, "child_priority == %d\n", child_priority);
+  }
+  else if(pid > 0)
+  {
+    wait();
+    parent_priority = getpriority();
+    printf(1, "parent_priority == %d\n", parent_priority);
+    printf(1, "parent_priority =?= child_priority\n");
+  }
+  else
+  {
+    printf(2, "error fork()\n");
+    exit();
+  }
+}
+
 void test_priority_aging()
 {
   printf(1, "test_priority_aging()\n");
@@ -14,6 +44,7 @@ void test_priority_aging()
     {
       setpriority(priority_val);
       printf(1, "child 2 completes\n");
+      exit();
     }
     else if(pid2 > 0)
     {
@@ -23,6 +54,7 @@ void test_priority_aging()
         ++i;
       printf(1, "child 1 completes\n");
       wait();
+      exit();
     }
     else
     {
@@ -46,7 +78,8 @@ int main(int argc, char *argv[])
   void PScheduler(void);
   printf(1, "\n This program tests the correctness of your lab#2\n");
   PScheduler();
-  test_priority_aging();
+  //test_priority_aging();
+  test_priority_inheritance();
   exit();
   return 0;
 }

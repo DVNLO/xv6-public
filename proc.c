@@ -216,6 +216,7 @@ fork(void)
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
+  np->priority = curproc->priority;
 
   release(&ptable.lock);
 
@@ -321,6 +322,16 @@ setpriority(int priority_value)
   int rc = p->priority = priority_value;
   release(&ptable.lock);
   return rc;
+}
+
+int
+getpriority()
+{
+  struct proc * p = myproc();
+  acquire(&ptable.lock);
+  int priority = p->priority;
+  release(&ptable.lock);
+  return priority;
 }
 
 inline
