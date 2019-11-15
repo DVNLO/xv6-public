@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
   void PScheduler(void);
   printf(1, "\n This program tests the correctness of your lab#2\n");
   PScheduler();
-  //test_priority_aging();
+  test_priority_aging();
   test_priority_inheritance();
   exit();
   return 0;
