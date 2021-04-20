@@ -225,7 +225,7 @@ fork(void)
 // An exited process remains in the zombie state
 // until its parent calls wait() to find out it exited.
 void
-exit(int status)
+exit(void)
 {
   struct proc *curproc = myproc();
   struct proc *p;
@@ -246,7 +246,6 @@ exit(int status)
   iput(curproc->cwd);
   end_op();
   curproc->cwd = 0;
-  curproc->exit_status = status;
 
   acquire(&ptable.lock);
 
