@@ -12,6 +12,7 @@
 #include "user.h"
 #include "fs.h"
 #include "fcntl.h"
+#include "param.h"
 
 int
 main(int argc, char *argv[])
@@ -45,5 +46,5 @@ main(int argc, char *argv[])
 
   wait();
 
-  exit();
+  exit(EXIT_SUCCESS);
 }

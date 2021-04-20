@@ -1,6 +1,7 @@
 #include "types.h"
 #include "stat.h"
 #include "user.h"
+#include "param.h"
 
 int
 main(int argc, char *argv[])
@@ -9,7 +10,7 @@ main(int argc, char *argv[])
 
   if(argc < 2){
     printf(2, "Usage: mkdir files...\n");
-    exit();
+    exit(EXIT_FAILURE);
   }
 
   for(i = 1; i < argc; i++){
@@ -19,5 +20,5 @@ main(int argc, char *argv[])
     }
   }
 
-  exit();
+  exit(EXIT_SUCCESS);
 }

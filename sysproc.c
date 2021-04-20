@@ -16,7 +16,13 @@ sys_fork(void)
 int
 sys_exit(void)
 {
-  exit();
+  int status;
+  // read an argument integer value supplied to kernel space
+  // from user space into address of the status variable.
+  int rc = argint(0, &status); // store the return code rc.
+  if(rc < 0)  // -> argint(...) failed.
+    return -1;
+  exit(status);  // invoke the kernel's exit(int)
   return 0;  // not reached
 }
 
@@ -88,4 +94,11 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+int
+sys_hello(void)
+{
+  cprintf("Hello from kernel space.\n");
+  return 0;
 }
