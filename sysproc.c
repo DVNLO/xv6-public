@@ -93,5 +93,5 @@ sys_uptime(void)
 int
 sys_info(void)
 {
-  return 0;
+  return info(0);
 }
