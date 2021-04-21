@@ -6,7 +6,6 @@ int main(int argc, char * argv[])
 {
   int rc;
   int i;
-  info(2);
   for(i = 1; i <= 3; ++i)
   {
     rc = info(i);
