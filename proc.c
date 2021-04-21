@@ -544,7 +544,7 @@ info(int val)
   {
     case 1:
     {
-      // return the system process count
+      // return the system process count.
       int system_process_count;
       system_process_count = 0;
       int i;
@@ -559,13 +559,21 @@ info(int val)
     }
     case 2:
     {
-      // return the cumulative number of system calls for the 
-      // current process.
-      struct proc *cur_proc = myproc();
+      // return the cumulative number of system calls for the current process.
+      struct proc * cur_proc = myproc();
       return cur_proc->sys_call_count;
     }
     case 3:
-      return 0;
+    {
+      // return the number of pages allocated to the current process.
+      struct proc * cur_proc = myproc();
+      int allocated_page_count = cur_proc->sz / PGSIZE;
+      if(cur_proc->sz % PGSIZE)
+      {
+        allocated_page_count += 1;
+      }
+      return allocated_page_count;
+    }
     default:
       return -1;
   } 

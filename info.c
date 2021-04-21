@@ -38,7 +38,18 @@ int test_info_2(void)
 
 int test_info_3(void)
 {
-  return PASS;
+  int process_page_count = info(3);
+  if(process_page_count < 0)
+  {
+    printf(1, "error calling info(3)\n");
+    return FAIL;
+  }
+  else
+  {
+    printf(1, "process_page_count == %d\n", process_page_count);
+    return PASS;
+  }
+return PASS;
 }
 
 
