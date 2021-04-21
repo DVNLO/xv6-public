@@ -533,6 +533,9 @@ procdump(void)
   }
 }
 
+
+// @brief returns requested system information if a valid value of val is 
+// provided. Otherwise, returns -1.
 int
 info(int val)
 {
@@ -540,25 +543,25 @@ info(int val)
   {
     case 1:
     {
-      int process_count;
-      process_count = 0;
+      // return the system process count
+      int system_process_count;
+      system_process_count = 0;
       int i;
       acquire(&ptable.lock);
       for(i = 0; i < NPROC; ++i)
       {
         if(ptable.proc[i].state != UNUSED)
-          ++process_count; 
+          ++system_process_count; 
       }
       release(&ptable.lock);
-      cprintf("system process count == %d\n", process_count);
-      return 0; 
+      return system_process_count; 
     }
     case 2:
     {
+      // return the cumulative number of system calls for the 
+      // current process.
       struct proc *cur_proc = myproc();
-      cprintf("total system call count for current process == %d\n", 
-              cur_proc->sys_call_count);
-      return 0;
+      return cur_proc->sys_call_count;
     }
     case 3:
       return 0;
