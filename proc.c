@@ -535,8 +535,8 @@ procdump(void)
 }
 
 
-// @brief returns requested system information if a valid value of val is 
-// provided. Otherwise, returns -1.
+/// @brief returns requested system information if a valid value of val is 
+/// provided. Otherwise, returns -1.
 int
 info(int val)
 {
@@ -577,4 +577,12 @@ info(int val)
     default:
       return -1;
   } 
+}
+
+
+/// @brief allocated a requested number of tickets val to the current process.
+int
+set_tickets(int val)
+{
+  return 0; // stub for now
 }
