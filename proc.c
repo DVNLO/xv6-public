@@ -584,5 +584,9 @@ info(int val)
 int
 set_tickets(int val)
 {
-  return 0; // stub for now
+  struct proc * cur_proc = myproc();
+  acquire(&ptable.lock);
+  cur_proc->tickets = val;
+  release(&ptable.lock);
+  return val;
 }
