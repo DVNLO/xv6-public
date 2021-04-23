@@ -4,8 +4,8 @@
 //prog3
 int main(int argc, char *argv[])
 {
-  int const tickets = set_tickets(10);
-  printf(1, "prog3 : tickets == %d\n", tickets);
+  /*int const tickets = */set_tickets(10);
+  //printf(1, "prog3 : tickets == %d\n", tickets);
   int i,k;
   const int loop=43000;
   for(i=0;i<loop;i++) {
@@ -15,5 +15,6 @@ int main(int argc, char *argv[])
       asm("nop");
     }
   }
+  info(4);
   exit();
 }

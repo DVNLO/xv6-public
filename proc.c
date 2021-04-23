@@ -23,7 +23,14 @@ static void wakeup1(void *chan);
 void
 pinit(void)
 {
+  struct proc * p;
   initlock(&ptable.lock, "ptable");
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    p->tickets = 0; 
+  }
+  release(&ptable.lock);
 }
 
 // Must be called with interrupts disabled
@@ -89,8 +96,10 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   p->sys_call_count = 0;
+  p->start_tick = ticks;
 
   release(&ptable.lock);
+  p->tickets = 10; // default
 
   // Allocate kernel stack.
   if((p->kstack = kalloc()) == 0){
@@ -312,6 +321,160 @@ wait(void)
   }
 }
 
+/// @brief default xv6 scheduler.
+/*
+void 
+scheduler_xv6(struct proc * p, struct cpu * c)
+{
+  cprintf("default scheduler ran?");
+  // Loop over process table looking for process to run.
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state != RUNNABLE)
+      continue;
+
+    // Switch to chosen process.  It is the process's job
+    // to release ptable.lock and then reacquire it
+    // before jumping back to us.
+    c->proc = p;
+    switchuvm(p);
+    p->state = RUNNING;
+
+    swtch(&(c->scheduler), p->context);
+    switchkvm();
+
+    // Process is done running for now.
+    // It should have changed its p->state before coming back.
+    c->proc = 0;
+  }
+}
+*/
+
+/*
+/// @brief return an integer between 0 and (2^15 - 1). Implementation adapted
+/// from lottery scheduling paper to support 32.
+/// Carl A. Waldspurger and William E. Weihl. 1994. Lottery scheduling: 
+/// flexible proportional-share resource management. In Proceedings of the 1st
+/// USENIX conference on Operating Systems Design and Implementation 
+/// (OSDI '94). USENIX Association, USA, 1–es. 
+uint
+random(void)
+{
+  static uint S = 1024;
+  uint const A = 2 * 16807;
+  unsigned long B = A * S; 
+  unsigned long const MASK_LOW  = 0x00FF;
+  unsigned long const MASK_HIGH = 0xFF00;
+  unsigned long const Q = B & MASK_LOW;
+  unsigned long const P = (B & MASK_HIGH) >> 16;
+  uint S_prime = P + Q;
+  if(S_prime < S)  // overflow
+  {
+    S_prime &= 0x7F;	// clear bit 16 
+    ++S_prime;
+  }
+  S = S_prime;
+  return S;
+}
+*/
+
+/// @brief I tried porting the above random function but narrowing the 
+/// 64 bit requirement for B to 32 bits made the function unusable. So
+/// I found the following implementation from github
+/// https://github.com/joonlim/xv6/blob/master/random.c
+uint
+random(void)
+{
+  // http://stackoverflow.com/questions/1167253/implementation-of-rand
+  static unsigned int z1 = 12345, z2 = 12345, z3 = 12345, z4 = 12345;
+  unsigned int b;
+  b  = ((z1 << 6) ^ z1) >> 13;
+  z1 = ((z1 & 4294967294U) << 18) ^ b;
+  b  = ((z2 << 2) ^ z2) >> 27; 
+  z2 = ((z2 & 4294967288U) << 2) ^ b;
+  b  = ((z3 << 13) ^ z3) >> 21;
+  z3 = ((z3 & 4294967280U) << 7) ^ b;
+  b  = ((z4 << 3) ^ z4) >> 12;
+  z4 = ((z4 & 4294967168U) << 13) ^ b;
+
+  return (z1 ^ z2 ^ z3 ^ z4) / 2;
+}
+
+/// @brief return a random unsigned integer in the requested range 
+/// [lo_val, hi_val].
+uint
+get_random_number(uint const lo_val, uint const hi_val)
+{
+  uint const range = hi_val - lo_val + 1;
+  return (random() % range) + lo_val;
+}
+
+uint
+get_total_ticket_count()
+{
+  struct proc * p;
+  uint total_ticket_count = 0;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state == RUNNABLE)
+      total_ticket_count += p->tickets;
+  }
+  return total_ticket_count;
+}
+
+struct proc *
+get_winning_process(int const drawn_ticket)
+{
+  struct proc * p;
+  uint ticket_count = 0;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state != RUNNABLE)
+      continue;
+    ticket_count += p->tickets;
+    if(ticket_count >= drawn_ticket)
+    {
+      return p;
+    } 
+  }
+  return (struct proc *)(0);
+}
+
+#define SCHED_LOTTERY 1 
+/// @brief lottery scheduler implementation
+void
+scheduler_lottery(struct proc * p, struct cpu * c)
+{
+  uint const total_ticket_count = get_total_ticket_count();
+  uint const drawn_ticket = get_random_number(0, total_ticket_count);
+  p = get_winning_process(drawn_ticket);
+  if(p)
+  {
+    //p->tick_count += 1;
+    // Switch to chosen process.
+    c->proc = p;
+    switchuvm(p);
+    p->state = RUNNING;
+    //cprintf("drawn_ticket == %d\n", drawn_ticket);
+    //cprintf("total_ticket_count == %d\n", total_ticket_count);
+    //cprintf("running %d : p->name == %s with %d tickets\n", p->pid, p->name, p->tickets);
+    swtch(&(c->scheduler), p->context);
+    switchkvm();
+
+    // Process is done running for now.
+    c->proc = 0; 
+  }
+}
+
+#define SCHED_STRIDE 0
+/// @brief stride scheduler implementation
+void
+scheduler_stride(struct proc * p, struct cpu * c)
+{
+  return; // stub for now
+}
+
+#if SCHED_LOTTERY && SCHED_STRIDE
+#error lottery and stride scheduler cannot be enabled simultaneously
+#endif
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -323,7 +486,7 @@ wait(void)
 void
 scheduler(void)
 {
-  struct proc *p;
+  struct proc *p = (struct proc *)(0);
   struct cpu *c = mycpu();
   c->proc = 0;
   
@@ -331,26 +494,10 @@ scheduler(void)
     // Enable interrupts on this processor.
     sti();
 
-    // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
-
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
-
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
-    }
+    scheduler_lottery(p, c);
+    //scheduler_stride(p, c);
+    //scheduler_xv6(p, c);
     release(&ptable.lock);
 
   }
@@ -567,12 +714,24 @@ info(int val)
     {
       // return the number of pages allocated to the current process.
       struct proc * cur_proc = myproc();
+      acquire(&ptable.lock);
       int allocated_page_count = cur_proc->sz / PGSIZE;
       if(cur_proc->sz % PGSIZE)
       {
         allocated_page_count += 1;
       }
+      release(&ptable.lock);
       return allocated_page_count;
+    }
+    case 4:
+    {
+      // return the number of ticks for the current process.
+      struct proc * cur_proc = myproc();
+      acquire(&ptable.lock);
+      int const elapsed_tick_count = ticks - cur_proc->start_tick;
+      release(&ptable.lock);
+      cprintf("%s : %d\n", cur_proc->name, elapsed_tick_count);
+      return ticks;
     }
     default:
       return -1;
@@ -580,13 +739,13 @@ info(int val)
 }
 
 
-/// @brief allocated a requested number of tickets val to the current process.
+/// @brief allocated a requested number of tickets val to the current process
+/// and update total ticket count to reflect the newly allocaated tickets for
+/// the current process.
 int
 set_tickets(int val)
 {
   struct proc * cur_proc = myproc();
-  acquire(&ptable.lock);
   cur_proc->tickets = val;
-  release(&ptable.lock);
   return val;
 }
