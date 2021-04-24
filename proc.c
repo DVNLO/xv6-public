@@ -23,14 +23,7 @@ static void wakeup1(void *chan);
 void
 pinit(void)
 {
-  struct proc * p;
   initlock(&ptable.lock, "ptable");
-  acquire(&ptable.lock);
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-  {
-    p->tickets = 0; 
-  }
-  release(&ptable.lock);
 }
 
 // Must be called with interrupts disabled
@@ -97,9 +90,10 @@ found:
   p->pid = nextpid++;
   p->sys_call_count = 0;
   p->start_tick = ticks;
+  p->tickets = 10; // default
+  p->schedule_count = 0;
 
   release(&ptable.lock);
-  p->tickets = 10; // default
 
   // Allocate kernel stack.
   if((p->kstack = kalloc()) == 0){
@@ -447,7 +441,7 @@ scheduler_lottery(struct proc * p, struct cpu * c)
   p = get_winning_process(drawn_ticket);
   if(p)
   {
-    //p->tick_count += 1;
+    p->schedule_count += 1;
     // Switch to chosen process.
     c->proc = p;
     switchuvm(p);
@@ -455,6 +449,7 @@ scheduler_lottery(struct proc * p, struct cpu * c)
     //cprintf("drawn_ticket == %d\n", drawn_ticket);
     //cprintf("total_ticket_count == %d\n", total_ticket_count);
     //cprintf("running %d : p->name == %s with %d tickets\n", p->pid, p->name, p->tickets);
+    cprintf("%d %s %d\n", ticks, p->name, p->schedule_count);
     swtch(&(c->scheduler), p->context);
     switchkvm();
 
@@ -728,9 +723,12 @@ info(int val)
       // return the number of ticks for the current process.
       struct proc * cur_proc = myproc();
       acquire(&ptable.lock);
-      int const elapsed_tick_count = ticks - cur_proc->start_tick;
+      uint const start_tick = cur_proc->start_tick;
+      uint const end_tick = ticks;
+      uint const elapsed_tick_count = end_tick - start_tick;
+      uint const schedule_count = cur_proc->schedule_count;
       release(&ptable.lock);
-      cprintf("%s : %d\n", cur_proc->name, elapsed_tick_count);
+      cprintf("%s : %d %d %d %d\n", cur_proc->name, start_tick, end_tick, elapsed_tick_count, schedule_count);
       return ticks;
     }
     default:

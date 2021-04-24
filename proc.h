@@ -52,6 +52,7 @@ struct proc {
   int sys_call_count;          // number of system calls made by process
   uint tickets;                // number of tickets held by process
   uint start_tick;             // starting tick when the process spawned
+  uint schedule_count;         // number of times process was scheduled
 };
 
 // Process memory is laid out contiguously, low addresses first:
