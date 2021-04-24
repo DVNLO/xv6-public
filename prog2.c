@@ -4,11 +4,10 @@
 //prog2
 int main(int argc, char *argv[])
 {
-  /*int const tickets = */set_tickets(200);
+  /*int const tickets = */set_tickets(20);
   //printf(1, "prog2 : tickets == %d\n", tickets);
   int i,k;
-  //const int loop=43000;
-  const int loop=90000;
+  const int loop=43000;
   for(i=0;i<loop;i++) {
     asm("nop");
     //in order to prevent the compiler from optimizing the for loop
