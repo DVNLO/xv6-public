@@ -1,0 +1,714 @@
+diff --git a/Makefile b/Makefile
+index 0c0df39..09d790c 100644
+--- a/Makefile
++++ b/Makefile
+@@ -181,10 +181,6 @@ UPROGS=\
+ 	_usertests\
+ 	_wc\
+ 	_zombie\
+-        _info\
+-        _prog1\
+-        _prog2\
+-        _prog3\
+ 
+ fs.img: mkfs README $(UPROGS)
+ 	./mkfs fs.img README $(UPROGS)
+@@ -254,7 +250,7 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
+ EXTRA=\
+ 	mkfs.c ulib.c user.h cat.c echo.c forktest.c grep.c kill.c\
+ 	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c\
+-	printf.c umalloc.c info.c prog1.c prog2.c prog3.c\
++	printf.c umalloc.c\
+ 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
+ 	.gdbinit.tmpl gdbutil\
+ 
+diff --git a/clean_and_run.sh b/clean_and_run.sh
+deleted file mode 100755
+index 3a04dea..0000000
+--- a/clean_and_run.sh
++++ /dev/null
+@@ -1,2 +0,0 @@
+-#! /bin/bash
+-make clean && make -j 12 qemu-nox CPUS=1 ;
+diff --git a/clean_and_run_debug.sh b/clean_and_run_debug.sh
+deleted file mode 100755
+index 7c91c18..0000000
+--- a/clean_and_run_debug.sh
++++ /dev/null
+@@ -1,2 +0,0 @@
+-#! /bin/bash
+-make clean && make -j 12 qemu-nox-gdb CPUS=1 ;
+diff --git a/defs.h b/defs.h
+index e779580..82fb982 100644
+--- a/defs.h
++++ b/defs.h
+@@ -120,8 +120,6 @@ void            userinit(void);
+ int             wait(void);
+ void            wakeup(void*);
+ void            yield(void);
+-int             info(int);
+-int             set_tickets(int);
+ 
+ // swtch.S
+ void            swtch(struct context**, struct context*);
+diff --git a/info.c b/info.c
+deleted file mode 100644
+index 681dbe3..0000000
+--- a/info.c
++++ /dev/null
+@@ -1,70 +0,0 @@
+-#include "types.h"
+-#include "stat.h"
+-#include "user.h"
+-
+-#define PASS 1
+-#define FAIL 0
+-
+-int
+-test_info_1(void)
+-{
+-  int system_process_count = info(1);
+-  if(system_process_count < 0)
+-  {
+-    printf(1, "error calling info(1)\n");
+-    return FAIL;
+-  }
+-  else
+-  {
+-    //printf(1, "system_process_count == %d\n", system_process_count);
+-    return PASS;
+-  }
+-}
+-
+-int test_info_2(void)
+-{
+-  int system_call_count = info(2);
+-  if(system_call_count < 0)
+-  {
+-    printf(1, "error calling info(2)\n");
+-    return FAIL;
+-  }
+-  else
+-  {
+-    //printf(1, "system_call_count == %d\n", system_call_count);
+-    return PASS;
+-  }
+-}
+-
+-int test_info_3(void)
+-{
+-  int process_page_count = info(3);
+-  if(process_page_count < 0)
+-  {
+-    printf(1, "error calling info(3)\n");
+-    return FAIL;
+-  }
+-  else
+-  {
+-    printf(1, "process_page_count == %d\n", process_page_count);
+-    return PASS;
+-  }
+-return PASS;
+-}
+-
+-
+-int main(int argc, char * argv[])
+-{
+-  int rc = test_info_1();
+-  rc &= test_info_2();
+-  rc &= test_info_3();
+-  if(!rc)
+-  {
+-    printf(1, "info(...) tests fail\n");
+-  }
+-  else
+-  {
+-    printf(1, "info(...) tests pass\n");
+-  }
+-  exit();
+-}
+diff --git a/kill_qemu.sh b/kill_qemu.sh
+deleted file mode 100755
+index ea0fd72..0000000
+--- a/kill_qemu.sh
++++ /dev/null
+@@ -1,2 +0,0 @@
+-#! /bin/bash
+-killall qemu-system-i386 ;
+diff --git a/proc.c b/proc.c
+index 755cba8..806b1b1 100644
+--- a/proc.c
++++ b/proc.c
+@@ -65,8 +65,6 @@ myproc(void) {
+   return p;
+ }
+ 
+-#define TICKET_DEFAULT 10
+-
+ //PAGEBREAK: 32
+ // Look in the process table for an UNUSED proc.
+ // If found, change state to EMBRYO and initialize
+@@ -90,11 +88,6 @@ allocproc(void)
+ found:
+   p->state = EMBRYO;
+   p->pid = nextpid++;
+-  p->sys_call_count = 0;
+-  p->start_tick = ticks;
+-  p->tickets = TICKET_DEFAULT; // default
+-  p->schedule_count = 0;
+-  p->pass = 0;
+ 
+   release(&ptable.lock);
+ 
+@@ -224,7 +217,7 @@ fork(void)
+   np->state = RUNNABLE;
+ 
+   release(&ptable.lock);
+- 
++
+   return pid;
+ }
+ 
+@@ -318,228 +311,6 @@ wait(void)
+   }
+ }
+ 
+-/// @brief default xv6 scheduler.
+-/*
+-void 
+-scheduler_xv6(struct proc * p, struct cpu * c)
+-{
+-  cprintf("default scheduler ran?");
+-  // Loop over process table looking for process to run.
+-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+-    if(p->state != RUNNABLE)
+-      continue;
+-
+-    // Switch to chosen process.  It is the process's job
+-    // to release ptable.lock and then reacquire it
+-    // before jumping back to us.
+-    c->proc = p;
+-    switchuvm(p);
+-    p->state = RUNNING;
+-
+-    swtch(&(c->scheduler), p->context);
+-    switchkvm();
+-
+-    // Process is done running for now.
+-    // It should have changed its p->state before coming back.
+-    c->proc = 0;
+-  }
+-}
+-*/
+-
+-/*
+-/// @brief return an integer between 0 and (2^15 - 1). Implementation adapted
+-/// from lottery scheduling paper to support 32.
+-/// Carl A. Waldspurger and William E. Weihl. 1994. Lottery scheduling: 
+-/// flexible proportional-share resource management. In Proceedings of the 1st
+-/// USENIX conference on Operating Systems Design and Implementation 
+-/// (OSDI '94). USENIX Association, USA, 1–es. 
+-uint
+-random(void)
+-{
+-  static uint S = 1024;
+-  uint const A = 2 * 16807;
+-  unsigned long B = A * S; 
+-  unsigned long const MASK_LOW  = 0x00FF;
+-  unsigned long const MASK_HIGH = 0xFF00;
+-  unsigned long const Q = B & MASK_LOW;
+-  unsigned long const P = (B & MASK_HIGH) >> 16;
+-  uint S_prime = P + Q;
+-  if(S_prime < S)  // overflow
+-  {
+-    S_prime &= 0x7F;	// clear bit 16 
+-    ++S_prime;
+-  }
+-  S = S_prime;
+-  return S;
+-}
+-*/
+-
+-/// @brief I tried porting the above random function but narrowing the 
+-/// 64 bit requirement for B to 32 bits made the function unusable. So
+-/// I found the following implementation from github
+-/// https://github.com/joonlim/xv6/blob/master/random.c
+-uint
+-random(void)
+-{
+-  // http://stackoverflow.com/questions/1167253/implementation-of-rand
+-  static unsigned int z1 = 12345, z2 = 12345, z3 = 12345, z4 = 12345;
+-  unsigned int b;
+-  b  = ((z1 << 6) ^ z1) >> 13;
+-  z1 = ((z1 & 4294967294U) << 18) ^ b;
+-  b  = ((z2 << 2) ^ z2) >> 27; 
+-  z2 = ((z2 & 4294967288U) << 2) ^ b;
+-  b  = ((z3 << 13) ^ z3) >> 21;
+-  z3 = ((z3 & 4294967280U) << 7) ^ b;
+-  b  = ((z4 << 3) ^ z4) >> 12;
+-  z4 = ((z4 & 4294967168U) << 13) ^ b;
+-
+-  return (z1 ^ z2 ^ z3 ^ z4) / 2;
+-}
+-
+-/// @brief return a random unsigned integer in the requested range 
+-/// [lo_val, hi_val].
+-uint
+-get_random_number(uint const lo_val, uint const hi_val)
+-{
+-  uint const range = hi_val - lo_val + 1;
+-  return (random() % range) + lo_val;
+-}
+-
+-uint
+-get_total_ticket_count()
+-{
+-  struct proc * p;
+-  uint total_ticket_count = 0;
+-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+-    if(p->state == RUNNABLE)
+-      total_ticket_count += p->tickets;
+-  }
+-  return total_ticket_count;
+-}
+-
+-struct proc *
+-get_winning_process(int const drawn_ticket)
+-{
+-  struct proc * p;
+-  uint ticket_count = 0;
+-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+-    if(p->state != RUNNABLE)
+-      continue;
+-    ticket_count += p->tickets;
+-    if(ticket_count >= drawn_ticket)
+-    {
+-      return p;
+-    } 
+-  }
+-  return (struct proc *)(0);
+-}
+-
+-#define SCHED_LOTTERY 0 
+-/// @brief lottery scheduler implementation
+-void
+-scheduler_lottery(struct proc * p, struct cpu * c)
+-{
+-  uint const total_ticket_count = get_total_ticket_count();
+-  uint const drawn_ticket = get_random_number(0, total_ticket_count);
+-  p = get_winning_process(drawn_ticket);
+-  if(p)
+-  {
+-    p->schedule_count += 1;
+-    // Switch to chosen process.
+-    c->proc = p;
+-    switchuvm(p);
+-    p->state = RUNNING;
+-    //cprintf("drawn_ticket == %d\n", drawn_ticket);
+-    //cprintf("total_ticket_count == %d\n", total_ticket_count);
+-    //cprintf("running %d : p->name == %s with %d tickets\n", p->pid, p->name, p->tickets);
+-    cprintf("%d %s %d\n", ticks, p->name, p->schedule_count);
+-    swtch(&(c->scheduler), p->context);
+-    switchkvm();
+-
+-    // Process is done running for now.
+-    c->proc = 0; 
+-  }
+-}
+-
+-
+-/// @brief returns a runnable process with the minimum pass if one exists in
+-/// the process table ptable. Otherwise returns 0.
+-struct proc *
+-get_min_pass_process()
+-{
+-  struct proc * min_pass_proc = (struct proc *)(0);
+-  struct proc * p; 
+-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+-    if(p->state != RUNNABLE)
+-      continue;
+-    if(!min_pass_proc)
+-    {
+-      min_pass_proc = p;
+-      continue;
+-    }
+-    if(p->pass < min_pass_proc->pass)
+-    {
+-      min_pass_proc = p;
+-    }
+-  }
+-  return min_pass_proc; 
+-}
+-
+-/// @brief returns the total stride coefficient such that
+-/// total_stride = prod(tickets_i, 1, count(processes)) 
+-/// for the runnable pool of processes.
+-uint
+-get_total_stride()
+-{
+-  uint total_stride = 1;
+-  struct proc * p;
+-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+-    if(p->state != RUNNABLE)
+-      continue;
+-    total_stride *= (p->tickets / TICKET_DEFAULT); 
+-  }
+-  return total_stride;
+-}
+-
+-
+-/// @brief returns the stride for the provided process p. 
+-uint
+-get_stride(struct proc * p)
+-{
+-  return get_total_stride() / (p->tickets / TICKET_DEFAULT);
+-}
+-
+-#define SCHED_STRIDE 1
+-/// @brief stride scheduler implementation
+-void
+-scheduler_stride(struct proc * p, struct cpu * c)
+-{
+-  p = get_min_pass_process();
+-  if(p)
+-  {
+-    p->schedule_count += 1;
+-    p->pass += get_stride(p);
+-    // Switch to chosen process.
+-    c->proc = p;
+-    switchuvm(p);
+-    p->state = RUNNING;
+-    //cprintf("drawn_ticket == %d\n", drawn_ticket);
+-    //cprintf("total_ticket_count == %d\n", total_ticket_count);
+-    //cprintf("running %d : p->name == %s with %d tickets\n", p->pid, p->name, p->tickets);
+-    cprintf("%d %s %d\n", ticks, p->name, p->schedule_count);
+-    swtch(&(c->scheduler), p->context);
+-    switchkvm();
+-
+-    // Process is done running for now.
+-    c->proc = 0; 
+-  } 
+-  return; // stub for now
+-}
+-
+-#if SCHED_LOTTERY && SCHED_STRIDE
+-#error lottery and stride scheduler cannot be enabled simultaneously
+-#endif
+-
+ //PAGEBREAK: 42
+ // Per-CPU process scheduler.
+ // Each CPU calls scheduler() after setting itself up.
+@@ -551,26 +322,34 @@ scheduler_stride(struct proc * p, struct cpu * c)
+ void
+ scheduler(void)
+ {
+-  struct proc *p = (struct proc *)(0);
++  struct proc *p;
+   struct cpu *c = mycpu();
+   c->proc = 0;
+-#if SCHED_LOTTERY
+-  cprintf("lottery\n");
+-#elif SCHED_STRIDE
+-  cprintf("stride\n");
+-#endif 
++  
+   for(;;){
+     // Enable interrupts on this processor.
+     sti();
+ 
++    // Loop over process table looking for process to run.
+     acquire(&ptable.lock);
+-#if SCHED_LOTTERY
+-    scheduler_lottery(p, c);
+-#elif SCHED_STRIDE
+-    scheduler_stride(p, c);
+-#else
+-    scheduler_xv6(p, c);
+-#endif
++    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
++      if(p->state != RUNNABLE)
++        continue;
++
++      // Switch to chosen process.  It is the process's job
++      // to release ptable.lock and then reacquire it
++      // before jumping back to us.
++      c->proc = p;
++      switchuvm(p);
++      p->state = RUNNING;
++
++      swtch(&(c->scheduler), p->context);
++      switchkvm();
++
++      // Process is done running for now.
++      // It should have changed its p->state before coming back.
++      c->proc = 0;
++    }
+     release(&ptable.lock);
+ 
+   }
+@@ -753,78 +532,3 @@ procdump(void)
+     cprintf("\n");
+   }
+ }
+-
+-
+-/// @brief returns requested system information if a valid value of val is 
+-/// provided. Otherwise, returns -1.
+-int
+-info(int val)
+-{
+-  switch(val)
+-  {
+-    case 1:
+-    {
+-      // return the system process count.
+-      int system_process_count;
+-      system_process_count = 0;
+-      int i;
+-      acquire(&ptable.lock);
+-      for(i = 0; i < NPROC; ++i)
+-      {
+-        if(ptable.proc[i].state != UNUSED)
+-          ++system_process_count; 
+-      }
+-      release(&ptable.lock);
+-      return system_process_count; 
+-    }
+-    case 2:
+-    {
+-      // return the cumulative number of system calls for the current process.
+-      struct proc * cur_proc = myproc();
+-      return cur_proc->sys_call_count;
+-    }
+-    case 3:
+-    {
+-      // return the number of pages allocated to the current process.
+-      struct proc * cur_proc = myproc();
+-      acquire(&ptable.lock);
+-      int allocated_page_count = cur_proc->sz / PGSIZE;
+-      if(cur_proc->sz % PGSIZE)
+-      {
+-        allocated_page_count += 1;
+-      }
+-      release(&ptable.lock);
+-      return allocated_page_count;
+-    }
+-    case 4:
+-    {
+-      // return the number of ticks for the current process.
+-      struct proc * cur_proc = myproc();
+-      acquire(&ptable.lock);
+-      uint const start_tick = cur_proc->start_tick;
+-      uint const end_tick = ticks;
+-      uint const elapsed_tick_count = end_tick - start_tick;
+-      uint const schedule_count = cur_proc->schedule_count;
+-      release(&ptable.lock);
+-      cprintf("%s : %d %d %d %d\n", cur_proc->name, start_tick, end_tick, elapsed_tick_count, schedule_count);
+-      return ticks;
+-    }
+-    default:
+-      return -1;
+-  } 
+-}
+-
+-
+-/// @brief allocated a requested number of tickets val to the current process
+-/// and update total ticket count to reflect the newly allocaated tickets for
+-/// the current process.
+-int
+-set_tickets(int val)
+-{
+-  struct proc * cur_proc = myproc();
+-  if(val >= TICKET_DEFAULT)
+-  {
+-    cur_proc->tickets = val;
+-  }
+-  return cur_proc->tickets;
+-}
+diff --git a/proc.h b/proc.h
+index 37e0061..1647114 100644
+--- a/proc.h
++++ b/proc.h
+@@ -49,11 +49,6 @@ struct proc {
+   struct file *ofile[NOFILE];  // Open files
+   struct inode *cwd;           // Current directory
+   char name[16];               // Process name (debugging)
+-  int sys_call_count;          // number of system calls made by process
+-  uint tickets;                // number of tickets held by process
+-  uint start_tick;             // starting tick when the process spawned
+-  uint schedule_count;         // number of times process was scheduled
+-  uint pass;                   // the pass of the current process
+ };
+ 
+ // Process memory is laid out contiguously, low addresses first:
+diff --git a/prog1.c b/prog1.c
+deleted file mode 100644
+index 84fde81..0000000
+--- a/prog1.c
++++ /dev/null
+@@ -1,20 +0,0 @@
+-#include "types.h"
+-#include "stat.h"
+-#include "user.h"
+-//prog1
+-int main(int argc, char *argv[])
+-{
+-  /*int const tickets = */set_tickets(30);
+-  //printf(1, "prog1 : tickets == %d\n", tickets);
+-  int i,k;
+-  const int loop=43000;
+-  for(i=0;i<loop;i++) {
+-    asm("nop");
+-    //in order to prevent the compiler from optimizing the for loop
+-    for(k=0;k<loop;k++) {
+-      asm("nop");
+-    }
+-  }
+-  info(4);
+-  exit();
+-}
+diff --git a/prog2.c b/prog2.c
+deleted file mode 100644
+index 78187af..0000000
+--- a/prog2.c
++++ /dev/null
+@@ -1,20 +0,0 @@
+-#include "types.h"
+-#include "stat.h"
+-#include "user.h"
+-//prog2
+-int main(int argc, char *argv[])
+-{
+-  /*int const tickets = */set_tickets(20);
+-  //printf(1, "prog2 : tickets == %d\n", tickets);
+-  int i,k;
+-  const int loop=43000;
+-  for(i=0;i<loop;i++) {
+-    asm("nop");
+-    //in order to prevent the compiler from optimizing the for loop
+-    for(k=0;k<loop;k++) {
+-      asm("nop");
+-    }
+-  }
+-  info(4);
+-  exit();
+-}
+diff --git a/prog3.c b/prog3.c
+deleted file mode 100644
+index b446e41..0000000
+--- a/prog3.c
++++ /dev/null
+@@ -1,20 +0,0 @@
+-#include "types.h"
+-#include "stat.h"
+-#include "user.h"
+-//prog3
+-int main(int argc, char *argv[])
+-{
+-  /*int const tickets = */set_tickets(10);
+-  //printf(1, "prog3 : tickets == %d\n", tickets);
+-  int i,k;
+-  const int loop=43000;
+-  for(i=0;i<loop;i++) {
+-    asm("nop");
+-    //in order to prevent the compiler from optimizing the for loop
+-    for(k=0;k<loop;k++) {
+-      asm("nop");
+-    }
+-  }
+-  info(4);
+-  exit();
+-}
+diff --git a/syscall.c b/syscall.c
+index 8c97ec5..ee85261 100644
+--- a/syscall.c
++++ b/syscall.c
+@@ -103,8 +103,6 @@ extern int sys_unlink(void);
+ extern int sys_wait(void);
+ extern int sys_write(void);
+ extern int sys_uptime(void);
+-extern int sys_info(void);
+-extern int sys_set_tickets(void);
+ 
+ static int (*syscalls[])(void) = {
+ [SYS_fork]    sys_fork,
+@@ -128,8 +126,6 @@ static int (*syscalls[])(void) = {
+ [SYS_link]    sys_link,
+ [SYS_mkdir]   sys_mkdir,
+ [SYS_close]   sys_close,
+-[SYS_info]    sys_info,
+-[SYS_set_tickets] sys_set_tickets,
+ };
+ 
+ void
+diff --git a/syscall.h b/syscall.h
+index d81250e..bc5f356 100644
+--- a/syscall.h
++++ b/syscall.h
+@@ -20,5 +20,3 @@
+ #define SYS_link   19
+ #define SYS_mkdir  20
+ #define SYS_close  21
+-#define SYS_info   22
+-#define SYS_set_tickets 23
+diff --git a/sysproc.c b/sysproc.c
+index 68b8158..0686d29 100644
+--- a/sysproc.c
++++ b/sysproc.c
+@@ -89,21 +89,3 @@ sys_uptime(void)
+   release(&tickslock);
+   return xticks;
+ }
+-
+-int
+-sys_info(void)
+-{
+-  int val;
+-  if(argint(0, &val) < 0)
+-    return -1;
+-  return info(val);
+-}
+-
+-int
+-sys_set_tickets(void)
+-{
+-  int val;
+-  if(argint(0, &val) < 0)
+-    return -1;
+-  return set_tickets(val);
+-}
+diff --git a/trap.c b/trap.c
+index 11fc6de..41c66eb 100644
+--- a/trap.c
++++ b/trap.c
+@@ -40,7 +40,6 @@ trap(struct trapframe *tf)
+     if(myproc()->killed)
+       exit();
+     myproc()->tf = tf;
+-    myproc()->sys_call_count += 1;
+     syscall();
+     if(myproc()->killed)
+       exit();
+diff --git a/user.h b/user.h
+index 61d337f..4f99c52 100644
+--- a/user.h
++++ b/user.h
+@@ -23,8 +23,6 @@ int getpid(void);
+ char* sbrk(int);
+ int sleep(int);
+ int uptime(void);
+-int info(int);
+-int set_tickets(int);
+ 
+ // ulib.c
+ int stat(const char*, struct stat*);
+diff --git a/usys.S b/usys.S
+index 85f22fa..8bfd8a1 100644
+--- a/usys.S
++++ b/usys.S
+@@ -29,5 +29,3 @@ SYSCALL(getpid)
+ SYSCALL(sbrk)
+ SYSCALL(sleep)
+ SYSCALL(uptime)
+-SYSCALL(info)
+-SYSCALL(set_tickets)
