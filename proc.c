@@ -65,6 +65,8 @@ myproc(void) {
   return p;
 }
 
+#define TICKET_DEFAULT 10
+
 //PAGEBREAK: 32
 // Look in the process table for an UNUSED proc.
 // If found, change state to EMBRYO and initialize
@@ -90,8 +92,9 @@ found:
   p->pid = nextpid++;
   p->sys_call_count = 0;
   p->start_tick = ticks;
-  p->tickets = 10; // default
+  p->tickets = TICKET_DEFAULT; // default
   p->schedule_count = 0;
+  p->pass = 0;
 
   release(&ptable.lock);
 
@@ -431,7 +434,7 @@ get_winning_process(int const drawn_ticket)
   return (struct proc *)(0);
 }
 
-#define SCHED_LOTTERY 1 
+#define SCHED_LOTTERY 0 
 /// @brief lottery scheduler implementation
 void
 scheduler_lottery(struct proc * p, struct cpu * c)
@@ -458,11 +461,78 @@ scheduler_lottery(struct proc * p, struct cpu * c)
   }
 }
 
-#define SCHED_STRIDE 0
+
+/// @brief returns a runnable process with the minimum pass if one exists in
+/// the process table ptable. Otherwise returns 0.
+struct proc *
+get_min_pass_process()
+{
+  struct proc * min_pass_proc = (struct proc *)(0);
+  struct proc * p; 
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state != RUNNABLE)
+      continue;
+    if(!min_pass_proc)
+    {
+      min_pass_proc = p;
+      continue;
+    }
+    if(p->pass < min_pass_proc->pass)
+    {
+      min_pass_proc = p;
+    }
+  }
+  return min_pass_proc; 
+}
+
+/// @brief returns the total stride coefficient such that
+/// total_stride = prod(tickets_i, 1, count(processes)) 
+/// for the runnable pool of processes.
+uint
+get_total_stride()
+{
+  uint total_stride = 1;
+  struct proc * p;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state != RUNNABLE)
+      continue;
+    total_stride *= (p->tickets / TICKET_DEFAULT); 
+  }
+  return total_stride;
+}
+
+
+/// @brief returns the stride for the provided process p. 
+uint
+get_stride(struct proc * p)
+{
+  return get_total_stride() / (p->tickets / TICKET_DEFAULT);
+}
+
+#define SCHED_STRIDE 1
 /// @brief stride scheduler implementation
 void
 scheduler_stride(struct proc * p, struct cpu * c)
 {
+  p = get_min_pass_process();
+  if(p)
+  {
+    p->schedule_count += 1;
+    p->pass += get_stride(p);
+    // Switch to chosen process.
+    c->proc = p;
+    switchuvm(p);
+    p->state = RUNNING;
+    //cprintf("drawn_ticket == %d\n", drawn_ticket);
+    //cprintf("total_ticket_count == %d\n", total_ticket_count);
+    //cprintf("running %d : p->name == %s with %d tickets\n", p->pid, p->name, p->tickets);
+    cprintf("%d %s %d\n", ticks, p->name, p->schedule_count);
+    swtch(&(c->scheduler), p->context);
+    switchkvm();
+
+    // Process is done running for now.
+    c->proc = 0; 
+  } 
   return; // stub for now
 }
 
@@ -484,15 +554,23 @@ scheduler(void)
   struct proc *p = (struct proc *)(0);
   struct cpu *c = mycpu();
   c->proc = 0;
-  
+#if SCHED_LOTTERY
+  cprintf("lottery\n");
+#elif SCHED_STRIDE
+  cprintf("stride\n");
+#endif 
   for(;;){
     // Enable interrupts on this processor.
     sti();
 
     acquire(&ptable.lock);
+#if SCHED_LOTTERY
     scheduler_lottery(p, c);
-    //scheduler_stride(p, c);
-    //scheduler_xv6(p, c);
+#elif SCHED_STRIDE
+    scheduler_stride(p, c);
+#else
+    scheduler_xv6(p, c);
+#endif
     release(&ptable.lock);
 
   }
@@ -744,6 +822,9 @@ int
 set_tickets(int val)
 {
   struct proc * cur_proc = myproc();
-  cur_proc->tickets = val;
-  return val;
+  if(val >= TICKET_DEFAULT)
+  {
+    cur_proc->tickets = val;
+  }
+  return cur_proc->tickets;
 }

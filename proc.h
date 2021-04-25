@@ -53,6 +53,7 @@ struct proc {
   uint tickets;                // number of tickets held by process
   uint start_tick;             // starting tick when the process spawned
   uint schedule_count;         // number of times process was scheduled
+  uint pass;                   // the pass of the current process
 };
 
 // Process memory is laid out contiguously, low addresses first:
