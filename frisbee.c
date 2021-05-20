@@ -53,6 +53,17 @@ main(int argc, char * argv[])
     set_turn_count(&frisbee, 0);
     set_max_turn_count(&frisbee, max_pass_count);
     // construct players
+    player_t * players = malloc(sizeof(player_t) * get_player_count(&frisbee));
+    if(!players)
+    {
+        printf(1, "unable to malloc players\n");
+        exit();
+    }
+    for(int i = 0; i < player_count; ++i)
+    {
+        player_t * cur_player = players + i;
+        set_game(cur_player, &frisbee);
+    }
 
     // spawn child threads
     // wait for child threads to join
