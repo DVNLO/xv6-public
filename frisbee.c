@@ -2,6 +2,9 @@
 #include "stat.h"
 #include "user.h"
 
+#define false 0
+#define true 1
+
 /// @brief prints frisbee usage to terminal
 void usage()
 {
