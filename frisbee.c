@@ -1,5 +1,6 @@
-#include "stat.h"
 #include "types.h"
+
+#include "stat.h"
 #include "user.h"
 
 #include "game.h"

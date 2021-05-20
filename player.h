@@ -21,7 +21,7 @@ set_player_id(player_t * const player, int const id_val)
     player->id = id_val;
 }
 
-game_t
+game_t *
 get_game(player_t * const player)
 {
     return player->game;
