@@ -3,6 +3,7 @@ OBJS = \
 	console.o\
 	exec.o\
 	file.o\
+	frisbee.o\
 	fs.o\
 	ide.o\
 	ioapic.o\
@@ -169,6 +170,7 @@ UPROGS=\
 	_cat\
 	_echo\
 	_forktest\
+	_frisbee\
 	_grep\
 	_init\
 	_kill\
