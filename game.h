@@ -1,3 +1,6 @@
+#ifndef GAME_H
+#define GAME_H
+
 typedef struct
 {
     int current_player_id;
@@ -53,3 +56,5 @@ set_max_turn_count(game_t * const game, int const max_turn_count_val)
 {
     game->max_turn_count = max_turn_count_val;
 }
+
+#endif // GAME_H
