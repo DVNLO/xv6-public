@@ -3,7 +3,6 @@ OBJS = \
 	console.o\
 	exec.o\
 	file.o\
-	frisbee.o\
 	fs.o\
 	ide.o\
 	ioapic.o\
