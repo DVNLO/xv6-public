@@ -21,14 +21,14 @@ set_player_id(player_t * const player, int const id_val)
     player->id = id_val;
 }
 
-int
-get_game(player_t const * const player)
+game_t
+get_game(player_t * const player)
 {
     return player->game;
 }
 
 void
-set_game(player_t * const player, game_t const * const game_val)
+set_game(player_t * const player, game_t * const game_val)
 {
     player->game = game_val;
 }
