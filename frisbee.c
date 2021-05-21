@@ -47,7 +47,6 @@ play_turn(player_t const * const player, game_t * const frisbee)
            "Pass number no: %d, Thread %d is passing the token to thread %d",
            current_turn_count, current_player_id, next_player_id);
     set_current_player_id(frisbee, next_player_id);
-    int const current_turn_count = get_turn_count(frisbee);
     int const next_turn_count = current_turn_count + 1;
     set_turn_count(frisbee, next_turn_count);
 }
@@ -57,7 +56,7 @@ play_frisbee(void * arg)
 {
     player_t * const player = (player_t *)(arg);
     game_t * const frisbee = get_game(player);
-    //while(true)
+    // while(true)
     {
         // acquire lock
         if(!game_on(frisbee))
