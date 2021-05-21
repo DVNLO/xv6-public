@@ -34,7 +34,7 @@ play_turn(player_t const * const player, game_t * const frisbee)
     int const next_player_id
         = (current_player_id + 1) % get_player_count(frisbee);
     printf(1,
-           "Pass number no: %d, Thread %d is passing the token to thread %d",
+           "Pass number no: %d, Thread %d is passing the token to thread %d\n",
            current_turn_count, current_player_id, next_player_id);
     set_current_player_id(frisbee, next_player_id);
     int const next_turn_count = current_turn_count + 1;
