@@ -59,6 +59,7 @@ play_frisbee(void * arg)
         }
         // release lock
     }
+    return 0;
 }
 
 int
