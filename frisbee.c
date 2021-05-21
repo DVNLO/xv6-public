@@ -31,6 +31,48 @@ pass_token(int const pass_count, int * const token, int const from_thread_id,
 }
 
 int
+is_player_turn(player_t const * const player, game_t * const frisbee)
+{
+    return get_player_id(player) == get_current_player_id(frisbee);
+}
+
+void
+play_turn(player_t const * const player, game_t * const frisbee)
+{
+    int const current_turn_count = get_turn_count(frisbee);
+    int const current_player_id = get_player_id(player);
+    int const next_player_id
+        = (current_player_id + 1) % get_player_count(frisbee);
+    printf(1,
+           "Pass number no: %d, Thread %d is passing the token to thread %d",
+           current_turn_count, current_player_id, next_player_id);
+    set_current_player_id(frisbee, next_player_id);
+    int const current_turn_count = get_turn_count(frisbee);
+    int const next_turn_count = current_turn_count + 1;
+    set_turn_count(frisbee, next_turn_count);
+}
+
+void *
+play_frisbee(void * arg)
+{
+    player_t * const player = (player_t *)(arg);
+    game_t * const frisbee = get_game(player);
+    //while(true)
+    {
+        // acquire lock
+        if(!game_on(frisbee))
+        {
+            return 0;
+        }
+        if(is_player_turn(player, frisbee))
+        {
+            play_turn(player, frisbee);
+        }
+        // release lock
+    }
+}
+
+int
 main(int argc, char * argv[])
 {
     int const expected_argument_count = 3;
@@ -61,11 +103,22 @@ main(int argc, char * argv[])
     }
     for(int i = 0; i < player_count; ++i)
     {
-        player_t * cur_player = players + i;
+        player_t * cur_player = &players[i];
+        set_player_id(cur_player, i);
         set_game(cur_player, &frisbee);
     }
-
     // spawn child threads
+    while(true)
+    {
+        if(!game_on(&frisbee))
+        {
+            break;
+        }
+        for(int i = 0; i < player_count; ++i)
+        {
+            play_frisbee(&players[i]);
+        }
+    }
     // wait for child threads to join
     exit();
 }
