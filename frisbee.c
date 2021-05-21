@@ -15,19 +15,9 @@ usage()
 }
 
 int
-is_turn(int const token, int const thread_id)
+is_game_on(game_t * const frisbee)
 {
-    return token == thread_id;
-}
-
-void
-pass_token(int const pass_count, int * const token, int const from_thread_id,
-           int const to_thread_id)
-{
-    *token = to_thread_id;
-    printf(1,
-           "Pass number no: %d, Thread %d is passing the token to thread %d",
-           pass_count, from_thread_id, to_thread_id);
+    return get_turn_count(frisbee) < get_max_turn_count(frisbee);
 }
 
 int
@@ -59,7 +49,7 @@ play_frisbee(void * arg)
     // while(true)
     {
         // acquire lock
-        if(!game_on(frisbee))
+        if(!is_game_on(frisbee))
         {
             return 0;
         }
@@ -109,7 +99,7 @@ main(int argc, char * argv[])
     // spawn child threads
     while(true)
     {
-        if(!game_on(&frisbee))
+        if(!is_game_on(&frisbee))
         {
             break;
         }
