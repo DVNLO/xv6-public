@@ -46,20 +46,21 @@ play_frisbee(void * arg)
 {
     player_t * const player = (player_t *)(arg);
     game_t * const frisbee = get_game(player);
-    // while(true)
+    while(true)
     {
-        // acquire lock
+        // lock_acquire(get_lock(frisbee));
         if(!is_game_on(frisbee))
         {
-            return 0;
+            break;
         }
         if(is_player_turn(player, frisbee))
         {
             play_turn(player, frisbee);
         }
-        // release lock
+        // lock_release(get_lock(frisbee));
     }
-    return 0;
+    exit();
+    return 0; // for compiler
 }
 
 int
@@ -78,7 +79,7 @@ main(int argc, char * argv[])
     // translate user arguments
     int const player_count = to_int(player_count_str);
     int const max_pass_count = to_int(max_pass_count_str);
-    // construct frisbee game;
+    // construct frisbee game
     game_t frisbee;
     set_current_player_id(&frisbee, 0);
     set_player_count(&frisbee, player_count);
@@ -93,11 +94,19 @@ main(int argc, char * argv[])
     }
     for(int i = 0; i < player_count; ++i)
     {
-        player_t * cur_player = &players[i];
-        set_player_id(cur_player, i);
-        set_game(cur_player, &frisbee);
+        player_t * current_player = &players[i];
+        set_player_id(current_player, i);
+        set_game(current_player, &frisbee);
     }
     // spawn child threads
+    /*
+    for(int i = 0; i < player_count; ++i)
+    {
+        player_t * current_player = &players[i];
+        thread_create(play_frisbee, (void *)(current_player))
+    }
+    */
+    // thread_create(void*(*start_routine)(void*), void *arg)
     while(true)
     {
         if(!is_game_on(&frisbee))
