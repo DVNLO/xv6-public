@@ -92,8 +92,11 @@ main(int argc, char * argv[])
         printf(1, "unable to malloc players\n");
         exit();
     }
+    int const stack_sz = 4096;
     for(int i = 0; i < player_count; ++i)
     {
+        void * stack = malloc(sizeof(char) * stack_sz);
+        clone(stack, stack_sz);
         player_t * current_player = &players[i];
         set_player_id(current_player, i);
         set_game(current_player, &frisbee);
