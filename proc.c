@@ -536,6 +536,27 @@ procdump(void)
 int
 clone(void * stack, int size)
 {
-  cprintf("kernel clone\n");
-  return -1;
+  cprintf("kernel clone begin\n");
+  int i, pid;
+  struct proc *np;
+  struct proc *curproc = myproc();
+  np = allocproc(); // allocate new process
+  if(!np)
+  {
+    return -1;
+  }
+  np->pgdir = curproc->pgdir; // use same page table
+  np->sz = curproc->sz;
+  np->parent = curproc;
+  *np->tf = *curproc->tf;
+  // you need to kernel malloc a stack for the new process.
+  np->tf->eax = 0;  // return 0 to the child
+  np->cwd = idup(curproc->cwd);
+  safestrcpy(np->name, curproc->name, sizeof(curproc->name));
+  pid = np->pid;
+  acquire(&ptable.lock);
+  np->state = RUNNABLE;
+  release(&ptable.lock);
+  cprintf("kernel clone end\n");
+  return pid;
 }

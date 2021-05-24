@@ -97,12 +97,21 @@ main(int argc, char * argv[])
     {
         void * player_stack = malloc(sizeof(char) * player_stack_sz);
         int rc = clone(player_stack, player_stack_sz);
-        if(rc == -1)
+        if(rc < 0)
         {
             printf(1, "unable to malloc player stack\n");
             exit();
         }
-        // handle the clone cases...
+        else if(rc > 0)
+        {
+            printf(1, "parent : %d\n", rc);
+            exit();
+        }
+        else
+        {
+            printf(1, "child : %d\n", rc);
+            exit();
+        }
         player_t * current_player = &players[i];
         set_player_id(current_player, i);
         set_game(current_player, &frisbee);
