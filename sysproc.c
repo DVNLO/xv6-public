@@ -93,8 +93,8 @@ sys_uptime(void)
 int
 sys_clone(void)
 {
-  void * stack;
-  int size;
+  void * stack = 0;
+  int size = 0;
   /*
   // figure out how to unpack the stack arguments
   if(argint(0, &pid) < 0)
