@@ -548,11 +548,15 @@ clone(void * stack, int size)
     return -1;
   }
   np->pgdir = curproc->pgdir; // use same page table
+  // the child process is using the parents stack!!!!
+  // how can we setup the child process to use the stack 
+  // provided to them?
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
   np->tf->eax = 0;  // return 0 to child
-  np->cwd = idup(curproc->cwd);
+  np->tf->esp = (uint)(stack);
+  np->cwd = curproc->cwd;
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
   pid = np->pid;
   acquire(&ptable.lock);
