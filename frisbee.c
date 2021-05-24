@@ -107,13 +107,10 @@ main(int argc, char * argv[])
         else if(rc > 0)
         {
             printf(1, "parent : %d\n", rc);
-            while(true)
-                continue;
         }
         else
         {
             printf(1, "child : %d\n", rc);
-            exit();
         }
         player_t * current_player = &players[i];
         set_player_id(current_player, i);
