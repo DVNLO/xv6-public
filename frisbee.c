@@ -105,7 +105,8 @@ main(int argc, char * argv[])
         else if(rc > 0)
         {
             printf(1, "parent : %d\n", rc);
-            exit();
+            while(true)
+                continue;
         }
         else
         {
