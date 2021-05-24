@@ -537,7 +537,7 @@ int
 clone(void * stack, int size)
 {
   cprintf("kernel clone begin\n");
-  int i, pid;
+  int pid;
   struct proc *np;
   struct proc *curproc = myproc();
   np = allocproc(); // allocate new process
@@ -549,8 +549,7 @@ clone(void * stack, int size)
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
-  // you need to kernel malloc a stack for the new process.
-  np->tf->eax = 0;  // return 0 to the child
+  np->tf->eax = 0;  // return 0 to child
   np->cwd = idup(curproc->cwd);
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
   pid = np->pid;
