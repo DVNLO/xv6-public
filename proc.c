@@ -532,3 +532,10 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+int
+clone(void * stack, int size)
+{
+  cprintf("kernel clone\n");
+  return -1;
+}
