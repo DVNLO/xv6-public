@@ -93,12 +93,18 @@ sys_uptime(void)
 int
 sys_clone(void)
 {
-  void * stack = 0;
-  int size = 0;
-  /*
-  // figure out how to unpack the stack arguments
-  if(argint(0, &pid) < 0)
+  void * stack;
+  int size;
+  int rc;
+  rc = argint(1, &size);
+  if(rc < 0)
+  {
     return -1;
-  */
+  }
+  rc = argptr(0, (char **)(&stack), size);
+  if(rc < 0)
+  {
+    return -1;
+  }
   return clone(stack, size);
 }
