@@ -99,6 +99,7 @@ main(int argc, char * argv[])
         void * player_stack = malloc(sizeof(char) * player_stack_sz);
         printf(1, "user : player_stack : %p\n", (char *)(player_stack));
         int rc = clone(player_stack, player_stack_sz);
+        printf(1, "rc : %d\n", rc);
         if(rc < 0)
         {
             printf(1, "unable to malloc player stack\n");
@@ -106,11 +107,13 @@ main(int argc, char * argv[])
         }
         else if(rc > 0)
         {
-            printf(1, "parent : %d\n", rc);
+            while(true)
+                printf(1, "parent : %d\n", rc);
         }
         else
         {
-            printf(1, "child : %d\n", rc);
+            while(true)
+                printf(1, "child : %d\n", rc);
         }
         player_t * current_player = &players[i];
         set_player_id(current_player, i);
