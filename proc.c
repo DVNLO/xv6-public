@@ -536,8 +536,8 @@ procdump(void)
 int
 clone(void * stack, int size)
 {
-  cprintf("stack : %p\n", stack);
-  cprintf("size : %d\n", size);
+  cprintf("kernel stack : %p\n", stack);
+  cprintf("kernel size : %d\n", size);
   cprintf("kernel clone begin\n");
   int pid;
   struct proc *np;

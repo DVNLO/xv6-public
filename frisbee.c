@@ -96,6 +96,7 @@ main(int argc, char * argv[])
     for(int i = 0; i < player_count; ++i)
     {
         void * player_stack = malloc(sizeof(char) * player_stack_sz);
+        printf(1, "user : player_stack : %p\n", (char *)(player_stack));
         int rc = clone(player_stack, player_stack_sz);
         if(rc < 0)
         {
