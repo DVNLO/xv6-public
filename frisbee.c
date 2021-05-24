@@ -1,5 +1,6 @@
 #include "types.h"
 
+#include "mmu.h"
 #include "stat.h"
 #include "user.h"
 
@@ -92,7 +93,7 @@ main(int argc, char * argv[])
         printf(1, "unable to malloc players\n");
         exit();
     }
-    int const player_stack_sz = 4096;
+    int const player_stack_sz = PGSIZE;
     for(int i = 0; i < player_count; ++i)
     {
         void * player_stack = malloc(sizeof(char) * player_stack_sz);
