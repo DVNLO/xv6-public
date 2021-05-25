@@ -196,7 +196,6 @@ fork(void)
     np->state = UNUSED;
     return -1;
   }
-  np->ustack = curproc->ustack; // copy user stack
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
