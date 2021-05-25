@@ -556,8 +556,8 @@ clone(void * stack, int size)
   cprintf("clone : size = %d\n", size);
   cprintf("clone : ustack[0] = %p\n", ustack[0]);
   cprintf("clone : ustack[1] = %p\n", ustack[1]);
-  new_proc->tf->ebp = &ustack[1];
-  new_proc->tf->esp = &ustack[0];
+  new_proc->tf->ebp = (uint)(stack) + size;
+  new_proc->tf->esp = (uint)(stack);
   new_proc->tf->eip = ustack[0];
   new_proc->cwd = cur_proc->cwd;
   safestrcpy(new_proc->name, cur_proc->name, sizeof(cur_proc->name));
