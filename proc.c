@@ -88,6 +88,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->child_thread_count = 0;
 
   release(&ptable.lock);
 
@@ -233,6 +234,12 @@ exit(void)
 
   if(curproc == initproc)
     panic("init exiting");
+
+  if(curproc->child_thread_count)
+  {
+    // wait for child threads to exit
+    wait();
+  }
 
   // Close all open files.
   for(fd = 0; fd < NOFILE; fd++){
@@ -617,6 +624,10 @@ thread_create(void * (*start_routine)(void*), void * arg)
     return -1;
   }
   rc = clone((void *)(sp), sizeof(ustack));
+  if(rc > 0)
+  {
+    cur_proc->child_thread_count += 1;
+  }
   //cprintf("thread_create end\n");
   return rc;
 }
