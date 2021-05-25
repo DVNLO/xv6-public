@@ -537,7 +537,7 @@ procdump(void)
 int
 clone(void * stack, int size)
 {
-  cprintf("clone begin\n");
+  //cprintf("clone begin\n");
   int pid;
   struct proc * new_proc;
   struct proc * cur_proc = myproc();
@@ -571,16 +571,18 @@ clone(void * stack, int size)
   acquire(&ptable.lock);
   new_proc->state = RUNNABLE;
   release(&ptable.lock);
-  cprintf("clone end\n");
+  //cprintf("clone end\n");
   return pid;
 }
 
 int
 thread_create(void * (*start_routine)(void*), void * arg)
 {
+  /*
   cprintf("thread_create begin\n");
   cprintf("thread_create : start_routine = %p\n", (uint)(start_routine));
   cprintf("thread_create : arg = %p\n", (uint)(arg));
+  */
   if(!start_routine)
   {
     return -1;
@@ -602,13 +604,13 @@ thread_create(void * (*start_routine)(void*), void * arg)
   uint sp;  // stack pointer
   // use second page as user stack
   bp = sz;
-  cprintf("thread_create : bp = %p\n", bp);
+  //cprintf("thread_create : bp = %p\n", bp);
   uint ustack[2];
   // build user stack
   ustack[0] = (uint)(start_routine);
   ustack[1] = (uint)(arg);
   sp = bp - sizeof(ustack);
-  cprintf("thread_create : sp = %p\n", sp);
+  //cprintf("thread_create : sp = %p\n", sp);
   int rc;
   rc = copyout(cur_proc->pgdir, sp, (void *)(ustack), sizeof(ustack));
   if(rc < 0)
@@ -616,6 +618,6 @@ thread_create(void * (*start_routine)(void*), void * arg)
     return -1;
   }
   rc = clone((void *)(sp), sizeof(ustack));
-  cprintf("thread_create end\n");
+  //cprintf("thread_create end\n");
   return rc;
 }
