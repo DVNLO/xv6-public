@@ -603,7 +603,7 @@ thread_create(void * (*start_routine)(void*), void * arg)
   // use second page as user stack
   bp = sz;
   cprintf("thread_create : bp = %p\n", bp);
-  uint ustack[1];
+  uint ustack[2];
   // build user stack
   ustack[0] = (uint)(start_routine);
   ustack[1] = (uint)(arg);
