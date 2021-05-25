@@ -1,5 +1,6 @@
 #ifndef GAME_H
 #define GAME_H
+#include "types.h"
 
 typedef struct
 {
@@ -7,6 +8,7 @@ typedef struct
     int player_count;
     int turn_count;
     int max_turn_count;
+    lock_t * lk;
 } game_t;
 
 int
@@ -55,6 +57,18 @@ void
 set_max_turn_count(game_t * const game, int const max_turn_count_val)
 {
     game->max_turn_count = max_turn_count_val;
+}
+
+lock_t *
+get_lock(game_t const * const game)
+{
+    return game->lk;
+}
+
+void
+set_lock(game_t * const game, lock_t * const lk_val)
+{
+    return game->lk = lk_val;
 }
 
 #endif // GAME_H
