@@ -538,11 +538,6 @@ int
 clone(void * stack, int size)
 {
   cprintf("clone begin\n");
-  // xv6 stacks are constant size
-  if(size != PGSIZE)
-  {
-    return -1;
-  }
   int pid;
   struct proc * new_proc;
   struct proc * cur_proc = myproc();
