@@ -562,6 +562,9 @@ clone(void * stack, int size)
   cprintf("cur_proc : esp %p\n", cur_proc->tf->esp);
   cprintf("new_proc : ustack %p\n", new_proc->ustack);
   cprintf("new_proc : esp %p\n", cur_proc->tf->esp);
+  cprintf("stack : %p\n", stack);
+  cprintf("size : %d\n", size);
+
   new_proc->tf->eax = 0;  // return 0 in child
   uint const cur_proc_esp_offset = cur_proc->ustack - cur_proc->tf->esp;
   new_proc->tf->esp = new_proc->ustack - cur_proc_esp_offset;
