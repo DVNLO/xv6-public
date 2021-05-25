@@ -67,7 +67,7 @@ exec(char *path, char **argv)
     goto bad;
   clearpteu(pgdir, (char*)(sz - 2*PGSIZE));
   sp = sz;
-  uint const initial_stack_pointer = sp;
+  //uint const initial_stack_pointer = sp;
 
   // Push argument strings, prepare rest of stack in ustack.
   for(argc = 0; argv[argc]; argc++) {
@@ -99,9 +99,9 @@ exec(char *path, char **argv)
   curproc->pgdir = pgdir;
   curproc->sz = sz;
   curproc->tf->eip = elf.entry;  // main
-  uint const final_stack_pointer = sp;
-  cprintf("exec : initial_stack_pointer : %p\n", initial_stack_pointer);
-  cprintf("exec : final_stack_pointer : %p\n", final_stack_pointer);
+  //uint const final_stack_pointer = sp;
+  //cprintf("exec : initial_stack_pointer : %p\n", initial_stack_pointer);
+  //cprintf("exec : final_stack_pointer : %p\n", final_stack_pointer);
   curproc->tf->esp = sp;
   switchuvm(curproc);
   freevm(oldpgdir);
