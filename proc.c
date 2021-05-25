@@ -537,8 +537,6 @@ procdump(void)
 int
 clone(void * stack, int size)
 {
-  cprintf("kernel stack : %p\n", stack);
-  cprintf("kernel size : %d\n", size);
   cprintf("kernel clone begin\n");
   // xv6 stacks are constant size
   if(size != PGSIZE)
@@ -553,22 +551,20 @@ clone(void * stack, int size)
   {
     return -1;
   }
-  new_proc->pgdir = cur_proc->pgdir; // use same page table
+  new_proc->pgdir = cur_proc->pgdir;
   new_proc->sz = cur_proc->sz;
   new_proc->parent = cur_proc;
   *new_proc->tf = *cur_proc->tf;
-
   uint const new_stack_end = (uint)(stack) - 1;
   uint const new_stack_begin = new_stack_end + size;
   new_proc->ustack = new_stack_begin;
-  copyout(cur_proc->pgdir, 
-          (new_proc->ustack - PGSIZE + 1), // TO
-          (void *)(cur_proc->ustack + PGSIZE - 1), // FROM
-          PGSIZE);
-  new_proc->tf->eax = 0;  // return 0 to child
+  cprintf("cur_proc : ustack %p\n", cur_proc->ustack);
+  cprintf("cur_proc : esp %p\n", cur_proc->tf->esp);
+  cprintf("new_proc : ustack %p\n", new_proc->ustack);
+  cprintf("new_proc : esp %p\n", cur_proc->tf->esp);
+  new_proc->tf->eax = 0;  // return 0 in child
   uint const cur_proc_esp_offset = cur_proc->ustack - cur_proc->tf->esp;
   new_proc->tf->esp = new_proc->ustack - cur_proc_esp_offset;
-  
   new_proc->cwd = cur_proc->cwd;
   safestrcpy(new_proc->name, cur_proc->name, sizeof(cur_proc->name));
   pid = new_proc->pid;
