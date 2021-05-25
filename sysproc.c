@@ -110,3 +110,48 @@ sys_thread_create(void)
   rc = thread_create(start_routine, arg);
   return rc;
 }
+
+int
+sys_lock_init(void)
+{
+  int const ptr_sz = 4; // bytes
+  lock_t * lk;
+  int rc;
+  rc = argptr(0, (char **)(&lk), ptr_sz);
+  if(rc < 0)
+  {
+    return -1;
+  }
+  initlock(lk, "lock_t");
+  return 0;
+}
+
+int
+sys_lock_acquire(void)
+{
+  int const ptr_sz = 4; // bytes
+  lock_t * lk;
+  int rc;
+  rc = argptr(0, (char **)(&lk), ptr_sz);
+  if(rc < 0)
+  {
+    return -1;
+  }
+  acquire(lk);
+  return 0;
+}
+
+int
+sys_lock_release(void)
+{
+  int const ptr_sz = 4; // bytes
+  lock_t * lk;
+  int rc;
+  rc = argptr(0, (char **)(&lk), ptr_sz);
+  if(rc < 0)
+  {
+    return -1;
+  }
+  release(lk);
+  return 0;
+}

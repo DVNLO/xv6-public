@@ -76,24 +76,6 @@ start(void * arg)
     }
     exit();
 }
-/*
-int
-main(int argc, char * argv[])
-{
-    void * (*start_routine)(void *) = start;
-    printf(1, "start : %p\n", start);
-    //start_routine((void *)(&argc));
-    int rc;
-    rc = thread_create(start_routine, (void *)(&argc));
-    printf(1, "rc : %d\n", rc);
-    while (true)
-    {
-        sleep(5);
-        continue;
-    }
-    exit();
-}
-*/
 
 int
 main(int argc, char * argv[])
@@ -143,12 +125,33 @@ main(int argc, char * argv[])
     }
     while(true)
     {
+        // lock_acquire(get_lock(frisbee));
         if(!is_game_on(&frisbee))
         {
             break;
         }
+        // lock_release(get_lock(frisbee));
         sleep(player_count);
     }
     // wait for child threads to join
     exit();
 }
+
+/*
+int
+main(int argc, char * argv[])
+{
+    void * (*start_routine)(void *) = start;
+    printf(1, "start : %p\n", start);
+    //start_routine((void *)(&argc));
+    int rc;
+    rc = thread_create(start_routine, (void *)(&argc));
+    printf(1, "rc : %d\n", rc);
+    while (true)
+    {
+        sleep(5);
+        continue;
+    }
+    exit();
+}
+*/
