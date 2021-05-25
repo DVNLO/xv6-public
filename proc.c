@@ -555,7 +555,6 @@ clone(void * stack, int size)
   new_proc->sz = cur_proc->sz;
   new_proc->parent = cur_proc;
   *new_proc->tf = *cur_proc->tf;
-  uint * ustack = (uint *)(stack);
   new_proc->tf->eax = 0;  // return 0 in child
   new_proc->tf->ebp = (uint)(stack) + size;
   new_proc->tf->esp = (uint)(stack);
