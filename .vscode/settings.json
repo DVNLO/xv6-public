@@ -8,6 +8,7 @@
         "utility": "c",
         "types.h": "c",
         "spinlock.h": "c",
-        "game.h": "c"
+        "game.h": "c",
+        "lock.h": "c"
     }
 }
