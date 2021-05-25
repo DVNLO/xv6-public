@@ -196,6 +196,7 @@ fork(void)
     np->state = UNUSED;
     return -1;
   }
+  np->ustack = curproc->ustack; // copy user stack
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
@@ -539,28 +540,35 @@ clone(void * stack, int size)
   cprintf("kernel stack : %p\n", stack);
   cprintf("kernel size : %d\n", size);
   cprintf("kernel clone begin\n");
-  int pid;
-  struct proc *np;
-  struct proc *curproc = myproc();
-  np = allocproc(); // allocate new process
-  if(!np)
+  // xv6 stacks are constant size
+  if(size != PGSIZE)
   {
     return -1;
   }
-  np->pgdir = curproc->pgdir; // use same page table
-  // the child process is using the parents stack!!!!
-  // how can we setup the child process to use the stack 
-  // provided to them?
-  np->sz = curproc->sz;
-  np->parent = curproc;
-  *np->tf = *curproc->tf;
-  np->tf->eax = 0;  // return 0 to child
-  np->tf->esp = (uint)(stack);
-  np->cwd = curproc->cwd;
-  safestrcpy(np->name, curproc->name, sizeof(curproc->name));
-  pid = np->pid;
+  int pid;
+  struct proc *new_proc;
+  struct proc *cur_proc = myproc();
+  new_proc = allocproc(); // allocate new process
+  if(!new_proc)
+  {
+    return -1;
+  }
+  new_proc->pgdir = cur_proc->pgdir; // use same page table
+  new_proc->sz = cur_proc->sz;
+  new_proc->parent = cur_proc;
+  *new_proc->tf = *cur_proc->tf;
+  char const * const new_stack_end = (char *)(stack) - 1;
+  char const * const new_stack_begin = new_stack_end + size;
+  new_proc->ustack = new_stack_begin;
+  memmove(V2P(new_proc->ustack - PGSIZE + 1), 
+          V2P(cur_proc->ustack - PGSIZE + 1), PGSIZE);
+  new_proc->tf->eax = 0;  // return 0 to child
+  new_proc->tf->esp = new_proc->ustack - (cur_proc->ustack - cur_proc->tf->esp);
+  new_proc->cwd = cur_proc->cwd;
+  safestrcpy(new_proc->name, cur_proc->name, sizeof(cur_proc->name));
+  pid = new_proc->pid;
   acquire(&ptable.lock);
-  np->state = RUNNABLE;
+  new_proc->state = RUNNABLE;
   release(&ptable.lock);
   cprintf("kernel clone end\n");
   return pid;
