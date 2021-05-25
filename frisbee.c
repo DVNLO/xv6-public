@@ -130,6 +130,7 @@ main(int argc, char * argv[])
         lock_release(lk);
         sleep(1);
     }
+    wait();
     exit();
 }
 
