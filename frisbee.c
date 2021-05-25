@@ -91,9 +91,10 @@ main(int argc, char * argv[])
     lock_t * game_lk = malloc(sizeof(lock_t));
     if(!game_lk)
     {
-        printf(1, "unable to malloc gamelock\n");
+        printf(1, "unable to malloc game lock\n");
         exit();
     }
+    lock_init(game_lk);
     set_lock(&frisbee, game_lk);
     // construct players
     player_t * players = malloc(sizeof(player_t) * get_player_count(&frisbee));
