@@ -81,7 +81,7 @@ main(int argc, char * argv[])
     void * (*start_routine)(void *) = start;
     int rc;
     rc = thread_create(start_routine, (void *)(&argc));
-    printf(1, "rc : %d\n");
+    printf(1, "rc : %d\n", rc);
     while (true)
     {
         continue;
