@@ -76,7 +76,7 @@ start(void * arg)
     }
     exit();
 }
-
+/*
 int
 main(int argc, char * argv[])
 {
@@ -93,8 +93,8 @@ main(int argc, char * argv[])
     }
     exit();
 }
+*/
 
-/*
 int
 main(int argc, char * argv[])
 {
@@ -124,30 +124,8 @@ main(int argc, char * argv[])
         printf(1, "unable to malloc players\n");
         exit();
     }
-    int const player_stack_sz = PGSIZE;
-    void * player_stack = malloc(sizeof(char) * player_stack_sz);
-    printf(1, "user : player_stack : %p\n", (char *)(player_stack));
-    int rc = clone(player_stack, player_stack_sz);
-    printf(1, "rc : %d\n", rc);
     for(int i = 0; i < player_count; ++i)
     {
-        void * player_stack = malloc(sizeof(char) * player_stack_sz);
-        printf(1, "user : player_stack : %p\n", (char *)(player_stack));
-        int rc = clone(player_stack, player_stack_sz);
-        printf(1, "rc : %d\n", rc);
-        if(rc < 0)
-        {
-            printf(1, "unable to malloc player stack\n");
-            exit();
-        }
-        else if(rc > 0)
-        {
-            printf(1, "parent : %d\n", rc);
-        }
-        else
-        {
-            printf(1, "child : %d\n", rc);
-        }
         player_t * current_player = &players[i];
         set_player_id(current_player, i);
         set_game(current_player, &frisbee);
@@ -156,21 +134,21 @@ main(int argc, char * argv[])
     for(int i = 0; i < player_count; ++i)
     {
         player_t * current_player = &players[i];
-        thread_create(play_frisbee, (void *)(current_player))
+        int rc = thread_create(play_frisbee, (void *)(current_player));
+        if(rc <= 0)
+        {
+            printf(1, "unable to create player thread\n");
+            exit();
+        }
     }
-    // thread_create(void*(*start_routine)(void*), void *arg)
     while(true)
     {
         if(!is_game_on(&frisbee))
         {
             break;
         }
-        for(int i = 0; i < player_count; ++i)
-        {
-            play_frisbee(&players[i]);
-        }
+        sleep(player_count);
     }
     // wait for child threads to join
     exit();
 }
-*/

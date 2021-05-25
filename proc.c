@@ -552,16 +552,17 @@ clone(void * stack, int size)
   *new_proc->tf = *cur_proc->tf;
   new_proc->tf->eax = 0;  // return 0 in child
   uint * ustack = (uint *)(stack);
+  /*
   cprintf("clone : stack = %p\n", stack);
   cprintf("clone : size = %d\n", size);
   cprintf("clone : stack + size = %p\n", (uint)(stack) + (uint)(size));
   cprintf("clone : ustack[0] = %p\n", ustack[0]);
   cprintf("clone : ustack[1] = %p\n", ustack[1]);
+  */
   new_proc->tf->ebp = (uint)(stack) + (uint)(size);
   new_proc->tf->esp = (uint)(stack);
   new_proc->tf->eip = ustack[0];
-  uint i;
-  for(i = 0; i < NOFILE; i++)
+  for(uint i = 0; i < NOFILE; i++)
     if(cur_proc->ofile[i])
       new_proc->ofile[i] = cur_proc->ofile[i];
   new_proc->cwd = cur_proc->cwd;
@@ -590,7 +591,7 @@ thread_create(void * (*start_routine)(void*), void * arg)
   sz = PGROUNDUP(sz);
   // allocate two pages at next page boundry
   sz = allocuvm(cur_proc->pgdir, sz, sz + 2*PGSIZE);
-  if(sz == 0)
+  if(!sz)
   {
     return -1;
   }
