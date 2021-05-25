@@ -1,3 +1,4 @@
+struct lock_t;
 struct stat;
 struct rtcdate;
 
@@ -24,9 +25,6 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int thread_create(void *(*)(void*), void *arg);
-int lock_init(lock_t *);
-int lock_acquire(lock_t *);
-int lock_release(lock_t *);
 
 // ulib.c
 int stat(const char*, struct stat*);

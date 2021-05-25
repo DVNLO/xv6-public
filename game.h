@@ -1,6 +1,6 @@
 #ifndef GAME_H
 #define GAME_H
-#include "types.h"
+#include "lock.h"
 
 typedef struct
 {

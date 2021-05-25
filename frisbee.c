@@ -6,6 +6,7 @@
 #include "user.h"
 
 #include "game.h"
+#include "lock.h"
 #include "player.h"
 #include "utility.h"
 
