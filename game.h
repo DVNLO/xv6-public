@@ -68,7 +68,7 @@ get_lock(game_t const * const game)
 void
 set_lock(game_t * const game, lock_t * const lk_val)
 {
-    return game->lk = lk_val;
+    game->lk = lk_val;
 }
 
 #endif // GAME_H
