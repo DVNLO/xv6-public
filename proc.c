@@ -352,7 +352,7 @@ scheduler(void)
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
-      cprintf("schedule : %s, %d\n", p->name, p->pid);
+      //cprintf("schedule : %s, %d\n", p->name, p->pid);
       swtch(&(c->scheduler), p->context);
       switchkvm();
 
