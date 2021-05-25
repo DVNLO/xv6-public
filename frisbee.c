@@ -67,10 +67,10 @@ play_frisbee(void * arg)
 void * 
 start(void * arg)
 {
-    int * val = (int *)(arg);
+    uint * val = (uint *)(arg);
     while (true)
     {
-        printf(1, "start : val = %d\n", *val);
+        printf(1, "start : val = %p\n", val);
         sleep(5);
         continue;
     }
