@@ -22,14 +22,14 @@ lock_acquire(lock_t * const lk)
     {
         continue;
     }
-    printf(1, "acquired\n");
+    //printf(1, "acquired\n");
 }
 
 void
 lock_release(lock_t * const lk)
 {
     xchg(&lk->is_locked, 0);
-    printf(1, "released\n");
+    //printf(1, "released\n");
 }
 
 #endif
