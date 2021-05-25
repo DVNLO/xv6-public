@@ -114,6 +114,7 @@ sys_thread_create(void)
 int
 sys_lock_init(void)
 {
+  cprintf("sys_lock_init : begin");
   int const ptr_sz = 4; // bytes
   lock_t * lk;
   int rc;
@@ -123,12 +124,14 @@ sys_lock_init(void)
     return -1;
   }
   initlock(lk, "lock_t");
+  cprintf("sys_lock_init : end");
   return 0;
 }
 
 int
 sys_lock_acquire(void)
 {
+  cprintf("sys_lock_acquire : begin");
   int const ptr_sz = 4; // bytes
   lock_t * lk;
   int rc;
@@ -138,12 +141,14 @@ sys_lock_acquire(void)
     return -1;
   }
   acquire(lk);
+  cprintf("sys_lock_acquire : end");
   return 0;
 }
 
 int
 sys_lock_release(void)
 {
+  cprintf("sys_lock_release : begin");
   int const ptr_sz = 4; // bytes
   lock_t * lk;
   int rc;
@@ -153,5 +158,6 @@ sys_lock_release(void)
     return -1;
   }
   release(lk);
+  cprintf("sys_lock_release : end");
   return 0;
 }
