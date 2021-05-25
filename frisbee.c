@@ -124,7 +124,6 @@ main(int argc, char * argv[])
     printf(1, "user : player_stack : %p\n", (char *)(player_stack));
     int rc = clone(player_stack, player_stack_sz);
     printf(1, "rc : %d\n", rc);
-    /*
     for(int i = 0; i < player_count; ++i)
     {
         void * player_stack = malloc(sizeof(char) * player_stack_sz);
@@ -148,15 +147,12 @@ main(int argc, char * argv[])
         set_player_id(current_player, i);
         set_game(current_player, &frisbee);
     }
-    */
     // spawn child threads
-    /*
     for(int i = 0; i < player_count; ++i)
     {
         player_t * current_player = &players[i];
         thread_create(play_frisbee, (void *)(current_player))
     }
-    */
     // thread_create(void*(*start_routine)(void*), void *arg)
     while(true)
     {
