@@ -235,30 +235,31 @@ exit(void)
 
   if(curproc == initproc)
     panic("init exiting");
-  
+
   if(curproc->child_thread_count)
   {
-    // wait for child threads to exit
+    // wait for child threads
     wait();
   }
 
-  if(!curproc->is_thread)
-  {
-    // Close all open files.
-    for(fd = 0; fd < NOFILE; fd++){
-      if(curproc->ofile[fd]){
-        fileclose(curproc->ofile[fd]);
-        curproc->ofile[fd] = 0;
-      }
+  // Close all open files.
+  for(fd = 0; fd < NOFILE; fd++){
+    if(curproc->ofile[fd]){
+      fileclose(curproc->ofile[fd]);
+      curproc->ofile[fd] = 0;
     }
-
-    begin_op();
-    iput(curproc->cwd);
-    end_op();
-    curproc->cwd = 0;
   }
 
+  begin_op();
+  iput(curproc->cwd);
+  end_op();
+  curproc->cwd = 0;
+
   acquire(&ptable.lock);
+  if(curproc->is_thread)
+  {
+    curproc->parent->child_thread_count -= 1;
+  }
 
   // Parent might be sleeping in wait().
   wakeup1(curproc->parent);
@@ -300,7 +301,7 @@ wait(void)
         pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
-        if(!p->is_thread)
+        if(!p->parent->child_thread_count)
         {
           freevm(p->pgdir);
         }
