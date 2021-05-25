@@ -140,10 +140,6 @@ main(int argc, char * argv[])
         printf(1, "main : end\n");
         sleep(player_count);
     }
-    while(true)
-    {
-        continue;
-    }
     // wait for child threads to join
     exit();
 }
