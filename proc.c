@@ -568,6 +568,8 @@ int
 thread_create(void * (*start_routine)(void*), void * arg)
 {
   cprintf("thread_create begin\n");
+  cprintf("thread_create : start_routine = %p\n", (uint)(start_routine));
+  cprintf("thread_create : arg = %p\n", (uint)(arg));
   if(!start_routine)
   {
     return -1;

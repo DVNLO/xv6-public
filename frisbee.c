@@ -79,6 +79,7 @@ int
 main(int argc, char * argv[])
 {
     void * (*start_routine)(void *) = start;
+    printf(1, "start : %p\n", start);
     int rc;
     rc = thread_create(start_routine, (void *)(&argc));
     printf(1, "rc : %d\n", rc);
