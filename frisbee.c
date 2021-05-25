@@ -50,7 +50,7 @@ play_frisbee(void * arg)
     game_t * const frisbee = get_game(player);
     while(true)
     {
-        lock_t * const lk = get_lock(&frisbee);
+        lock_t * const lk = get_lock(frisbee);
         lock_acquire(lk);
         if(!is_game_on(frisbee))
         {
