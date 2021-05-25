@@ -250,6 +250,7 @@ exit(void)
   curproc->cwd = 0;
 
   acquire(&ptable.lock);
+  cprintf("exit : %s, %d\n", curproc->name, curproc->pid);
   if(curproc->is_thread)
   {
     curproc->parent->child_thread_count -= 1;

@@ -116,11 +116,6 @@ main(int argc, char * argv[])
     {
         player_t * current_player = &players[i];
         int rc = thread_create(play_frisbee, (void *)(current_player));
-        if(rc <= 0)
-        {
-            printf(1, "unable to create player thread\n");
-            exit();
-        }
     }
     wait();
     exit();
