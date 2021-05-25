@@ -4,7 +4,6 @@
 #include "spinlock.h"
 #include "stat.h"
 #include "user.h"
-#include "x86.h"
 
 #include "game.h"
 #include "lock.h"
@@ -53,7 +52,7 @@ play_frisbee(void * arg)
     while(true)
     {
         lock_t * const lk = get_lock(frisbee);
-        printf(1, "player : %d", get_player_id(player));
+        printf(1, "player : %d begin\n", get_player_id(player));
         lock_acquire(lk);
         if(!is_game_on(frisbee))
         {
@@ -63,6 +62,7 @@ play_frisbee(void * arg)
         {
             play_turn(player, frisbee);
         }
+        printf(1, "player : %d end\n", get_player_id(player));
         lock_release(lk);
     }
     exit();
@@ -126,13 +126,14 @@ main(int argc, char * argv[])
     while(true)
     {
         lock_t * const lk = get_lock(&frisbee);
-        printf(1, "main : ");
+        printf(1, "main : begin\n");
         lock_acquire(lk);
         if(!is_game_on(&frisbee))
         {
             break;
         }
         lock_release(lk);
+        printf(1, "main : end\n");
         sleep(player_count);
     }
     // wait for child threads to join

@@ -2,6 +2,7 @@
 #define LOCK_H
 
 #include "types.h"
+#include "x86.h"
 
 typedef struct
 {
