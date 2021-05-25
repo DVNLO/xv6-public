@@ -537,7 +537,7 @@ procdump(void)
 int
 clone(void * stack, int size)
 {
-  cprintf("kernel clone begin\n");
+  cprintf("clone begin\n");
   // xv6 stacks are constant size
   if(size != PGSIZE)
   {
@@ -546,15 +546,6 @@ clone(void * stack, int size)
   int pid;
   struct proc * new_proc;
   struct proc * cur_proc = myproc();
-  
-  uint sz = cur_proc->sz;
-  sz = PGROUNDUP(sz);
-  sz = allocuvm(cur_proc->pgdir, sz, sz + 2*PGSIZE);
-  if(!sz)
-  {
-    return -1;
-  }
-  clearpteu(cur_proc->pgdir, (char*)(sz - 2*PGSIZE));
   new_proc = allocproc(); // allocate new process
   if(!new_proc)
   {
@@ -564,36 +555,57 @@ clone(void * stack, int size)
   new_proc->sz = cur_proc->sz;
   new_proc->parent = cur_proc;
   *new_proc->tf = *cur_proc->tf;
-  uint const new_stack_end = (uint)(stack) - 1;
-  uint const new_stack_begin = new_stack_end + size;
-  new_proc->ustack = new_stack_begin;
-  cprintf("cur_proc : ustack %p\n", cur_proc->ustack);
-  cprintf("cur_proc : esp %p\n", cur_proc->tf->esp);
-  cprintf("new_proc : ustack %p\n", new_proc->ustack);
-  cprintf("new_proc : esp %p\n", cur_proc->tf->esp);
-  cprintf("stack : %p\n", stack);
-  cprintf("size : %d\n", size);
-
+  uint * ustack = (uint *)(stack);
   new_proc->tf->eax = 0;  // return 0 in child
-  uint const cur_proc_esp_offset = cur_proc->ustack - cur_proc->tf->esp;
-  new_proc->tf->esp = new_proc->ustack - cur_proc_esp_offset;
+  new_proc->tf->ebp = (uint)(stack) + size;
+  new_proc->tf->esp = (uint)(stack);
+  new_proc->tf->eip = ((uint *)(stack))[0];
   new_proc->cwd = cur_proc->cwd;
   safestrcpy(new_proc->name, cur_proc->name, sizeof(cur_proc->name));
   pid = new_proc->pid;
   acquire(&ptable.lock);
   new_proc->state = RUNNABLE;
   release(&ptable.lock);
-  cprintf("kernel clone end\n");
+  cprintf("clone end\n");
   return pid;
 }
 
 int
 thread_create(void * (*start_routine)(void*), void * arg)
 {
+  cprintf("thread_create begin\n");
   if(!start_routine)
   {
     return -1;
   }
-  cprintf("sys_call : thread_create\n");
-  return 0;
+  struct proc * cur_proc = myproc();
+  uint sz;
+  sz = cur_proc->sz;
+  sz = PGROUNDUP(sz);
+  // allocate two pages at next page boundry
+  sz = allocuvm(cur_proc->pgdir, sz, sz + 2*PGSIZE);
+  if(sz == 0)
+  {
+    return -1;
+  }
+  // make the first page inaccessible
+  clearpteu(cur_proc->pgdir, (char*)(sz - 2*PGSIZE));
+  cur_proc->sz = sz;
+  uint bp;  // base pointer
+  uint sp;  // stack pointer
+  // use second page as user stack
+  bp = sz;
+  uint ustack[2];
+  ustack[0] = (uint)(start_routine);
+  ustack[1] = (uint)(arg);
+  sp = bp - sizeof(ustack);
+  int rc;
+  rc = copyout(cur_proc->pgdir, sp, (void *)(ustack), sizeof(ustack));
+  if(rc < 0)
+  {
+    return -1;
+  }
+  rc = clone((void *)(sp), sizeof(ustack));
+  cprintf("thread_create end\n");
+  return rc;
 }
