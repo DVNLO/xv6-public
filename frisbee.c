@@ -64,10 +64,11 @@ play_frisbee(void * arg)
     return 0; // for compiler
 }
 
-void * start(void * arg)
+void * 
+start(void * arg)
 {
     int * val = (int *)(arg);
-    printf(1, "start : val = %d\n", val);
+    printf(1, "start : val = %d\n", *val);
     while (true)
     {
         sleep(5);
@@ -81,7 +82,7 @@ main(int argc, char * argv[])
 {
     void * (*start_routine)(void *) = start;
     printf(1, "start : %p\n", start);
-    start_routine((void *)(&argc));
+    //start_routine((void *)(&argc));
     int rc;
     rc = thread_create(start_routine, (void *)(&argc));
     printf(1, "rc : %d\n", rc);
