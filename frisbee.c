@@ -49,7 +49,8 @@ play_frisbee(void * arg)
     game_t * const frisbee = get_game(player);
     while(true)
     {
-        lock_acquire(get_lock(frisbee));
+        lock_t * const lk = get_lock(&frisbee);
+        lock_acquire(lk);
         if(!is_game_on(frisbee))
         {
             break;
@@ -58,7 +59,7 @@ play_frisbee(void * arg)
         {
             play_turn(player, frisbee);
         }
-        lock_release(get_lock(frisbee));
+        lock_release(lk);
     }
     exit();
     return 0; // for compiler
@@ -92,7 +93,7 @@ main(int argc, char * argv[])
         printf(1, "unable to malloc gamelock\n");
         exit();
     }
-    set_game_lock(&frisbee, game_lk);
+    set_lock(&frisbee, game_lk);
     // construct players
     player_t * players = malloc(sizeof(player_t) * get_player_count(&frisbee));
     if(!players)
@@ -119,12 +120,13 @@ main(int argc, char * argv[])
     }
     while(true)
     {
-        lock_acquire(get_lock(frisbee));
+        lock_t * const lk = get_lock(&frisbee);
+        lock_acquire(lk);
         if(!is_game_on(&frisbee))
         {
             break;
         }
-        lock_release(get_lock(frisbee));
+        lock_release(lk);
         sleep(player_count);
     }
     // wait for child threads to join
