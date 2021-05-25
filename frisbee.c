@@ -64,6 +64,32 @@ play_frisbee(void * arg)
     return 0; // for compiler
 }
 
+void * start(void * arg)
+{
+    int * val = (int *)(arg);
+    printf(1, "start : val = %d\n", val);
+    while (true)
+    {
+        continue;
+    }
+    exit();
+}
+
+int
+main(int argc, char * argv[])
+{
+    void * (*start_routine)(void *) = start;
+    int rc;
+    rc = thread_create(start_routine, (void *)(&argc));
+    printf(1, "rc : %d\n");
+    while (true)
+    {
+        continue;
+    }
+    exit();
+}
+
+/*
 int
 main(int argc, char * argv[])
 {
@@ -146,3 +172,4 @@ main(int argc, char * argv[])
     // wait for child threads to join
     exit();
 }
+*/

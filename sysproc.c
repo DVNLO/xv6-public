@@ -91,20 +91,22 @@ sys_uptime(void)
 }
 
 int
-sys_clone(void)
+sys_thread_create(void)
 {
-  void * stack;
-  int size;
+  int const ptr_sz = 4; // bytes
+  void * (*start_routine)(void*);
+  void * arg;
   int rc;
-  rc = argint(1, &size);
+  rc = argptr(0, (char **)(&start_routine), ptr_sz);
   if(rc < 0)
   {
     return -1;
   }
-  rc = argptr(0, (char **)(&stack), size);
+  rc = argptr(1, (char **)(&arg), ptr_sz);
   if(rc < 0)
   {
     return -1;
   }
-  return clone(stack, size);
+  rc = thread_create(start_routine, arg);
+  return rc;
 }

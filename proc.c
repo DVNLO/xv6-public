@@ -544,13 +544,23 @@ clone(void * stack, int size)
     return -1;
   }
   int pid;
-  struct proc *new_proc;
-  struct proc *cur_proc = myproc();
+  struct proc * new_proc;
+  struct proc * cur_proc = myproc();
+  
+  uint sz = cur_proc->sz;
+  sz = PGROUNDUP(sz);
+  sz = allocuvm(cur_proc->pgdir, sz, sz + 2*PGSIZE);
+  if(!sz)
+  {
+    return -1;
+  }
+  clearpteu(cur_proc->pgdir, (char*)(sz - 2*PGSIZE));
   new_proc = allocproc(); // allocate new process
   if(!new_proc)
   {
     return -1;
   }
+  sp = sz;
   new_proc->pgdir = cur_proc->pgdir;
   new_proc->sz = cur_proc->sz;
   new_proc->parent = cur_proc;
@@ -576,4 +586,15 @@ clone(void * stack, int size)
   release(&ptable.lock);
   cprintf("kernel clone end\n");
   return pid;
+}
+
+int
+thread_create(void * (*start_routine)(void*), void * arg)
+{
+  if(!start_routine)
+  {
+    return -1;
+  }
+  cprintf("sys_call : thread_create\n");
+  return 0;
 }
