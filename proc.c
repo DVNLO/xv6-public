@@ -561,6 +561,10 @@ clone(void * stack, int size)
   new_proc->tf->ebp = (uint)(stack) + (uint)(size);
   new_proc->tf->esp = (uint)(&ustack[1]);
   new_proc->tf->eip = ustack[2];
+  uint i;
+  for(i = 0; i < NOFILE; i++)
+    if(cur_proc->ofile[i])
+      new_proc->ofile[i] = cur_proc->ofile[i];
   new_proc->cwd = cur_proc->cwd;
   safestrcpy(new_proc->name, cur_proc->name, sizeof(cur_proc->name));
   pid = new_proc->pid;
