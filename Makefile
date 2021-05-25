@@ -9,13 +9,11 @@ OBJS = \
 	kalloc.o\
 	kbd.o\
 	lapic.o\
-	lock.o\
 	log.o\
 	main.o\
 	mp.o\
 	picirq.o\
-	pipe.o\
-	printf.o\
+	pipe.o\	
 	proc.o\
 	sleeplock.o\
 	spinlock.o\
