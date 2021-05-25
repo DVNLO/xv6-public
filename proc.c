@@ -299,7 +299,7 @@ wait(void)
         pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
-        if(!curproc->child_thread_count)
+        if(!p->is_thread)
         {
           freevm(p->pgdir);
         }
@@ -549,7 +549,6 @@ procdump(void)
 int
 clone(void * stack, int size)
 {
-  //cprintf("clone begin\n");
   int pid;
   struct proc * new_proc;
   struct proc * cur_proc = myproc();
@@ -564,13 +563,6 @@ clone(void * stack, int size)
   *new_proc->tf = *cur_proc->tf;
   new_proc->tf->eax = 0;  // return 0 in child
   uint * ustack = (uint *)(stack);
-  /*
-  cprintf("clone : stack = %p\n", stack);
-  cprintf("clone : size = %d\n", size);
-  cprintf("clone : stack + size = %p\n", (uint)(stack) + (uint)(size));
-  cprintf("clone : ustack[0] = %p\n", ustack[0]);
-  cprintf("clone : ustack[1] = %p\n", ustack[1]);
-  */
   new_proc->tf->ebp = (uint)(stack) + (uint)(size);
   new_proc->tf->esp = (uint)(stack);
   new_proc->tf->eip = ustack[0];
@@ -584,18 +576,12 @@ clone(void * stack, int size)
   acquire(&ptable.lock);
   new_proc->state = RUNNABLE;
   release(&ptable.lock);
-  //cprintf("clone end\n");
-  return pid;
+  return pid; // to parent
 }
 
 int
 thread_create(void * (*start_routine)(void*), void * arg)
 {
-  /*
-  cprintf("thread_create begin\n");
-  cprintf("thread_create : start_routine = %p\n", (uint)(start_routine));
-  cprintf("thread_create : arg = %p\n", (uint)(arg));
-  */
   if(!start_routine)
   {
     return -1;
@@ -610,21 +596,19 @@ thread_create(void * (*start_routine)(void*), void * arg)
   {
     return -1;
   }
-  // make the first page inaccessible
+  // make first page inaccessible
   clearpteu(cur_proc->pgdir, (char*)(sz - 2*PGSIZE));
-  cur_proc->sz = sz;
+  cur_proc->sz = sz;  // update current process size
   uint bp;  // base pointer
   uint sp;  // stack pointer
-  // use second page as user stack
   bp = sz;
-  //cprintf("thread_create : bp = %p\n", bp);
   uint ustack[2];
   // build user stack
   ustack[0] = (uint)(start_routine);
   ustack[1] = (uint)(arg);
   sp = bp - sizeof(ustack);
-  //cprintf("thread_create : sp = %p\n", sp);
   int rc;
+  // write user stack to second page
   rc = copyout(cur_proc->pgdir, sp, (void *)(ustack), sizeof(ustack));
   if(rc < 0)
   {
@@ -635,6 +619,5 @@ thread_create(void * (*start_routine)(void*), void * arg)
   {
     cur_proc->child_thread_count += 1;
   }
-  //cprintf("thread_create end\n");
   return rc;
 }
