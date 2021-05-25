@@ -88,6 +88,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->is_thread = 0;
   p->child_thread_count = 0;
 
   release(&ptable.lock);
@@ -234,25 +235,28 @@ exit(void)
 
   if(curproc == initproc)
     panic("init exiting");
-
+  
   if(curproc->child_thread_count)
   {
     // wait for child threads to exit
     wait();
   }
 
-  // Close all open files.
-  for(fd = 0; fd < NOFILE; fd++){
-    if(curproc->ofile[fd]){
-      fileclose(curproc->ofile[fd]);
-      curproc->ofile[fd] = 0;
+  if(!curproc->is_thread)
+  {
+    // Close all open files.
+    for(fd = 0; fd < NOFILE; fd++){
+      if(curproc->ofile[fd]){
+        fileclose(curproc->ofile[fd]);
+        curproc->ofile[fd] = 0;
+      }
     }
-  }
 
-  begin_op();
-  iput(curproc->cwd);
-  end_op();
-  curproc->cwd = 0;
+    begin_op();
+    iput(curproc->cwd);
+    end_op();
+    curproc->cwd = 0;
+  }
 
   acquire(&ptable.lock);
 
@@ -296,7 +300,10 @@ wait(void)
         pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
-        freevm(p->pgdir);
+        if(!p->is_thread)
+        {
+          freevm(p->pgdir);
+        }
         p->pid = 0;
         p->parent = 0;
         p->name[0] = 0;
@@ -568,6 +575,7 @@ clone(void * stack, int size)
   new_proc->tf->ebp = (uint)(stack) + (uint)(size);
   new_proc->tf->esp = (uint)(stack);
   new_proc->tf->eip = ustack[0];
+  new_proc->is_thread = 1;
   for(uint i = 0; i < NOFILE; i++)
     if(cur_proc->ofile[i])
       new_proc->ofile[i] = cur_proc->ofile[i];
