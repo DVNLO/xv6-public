@@ -557,15 +557,18 @@ clone(void * stack, int size)
   new_proc->sz = cur_proc->sz;
   new_proc->parent = cur_proc;
   *new_proc->tf = *cur_proc->tf;
+
   uint const new_stack_end = (uint)(stack) - 1;
   uint const new_stack_begin = new_stack_end + size;
   new_proc->ustack = new_stack_begin;
-  memmove((void *)(V2P(new_proc->ustack - PGSIZE + 1)), 
-          (void *)(V2P(cur_proc->ustack - PGSIZE + 1)), 
+  copyout(cur_proc->pgdir, 
+          (new_proc->ustack - PGSIZE + 1), // TO
+          (void *)(cur_proc->ustack + PGSIZE - 1), // FROM
           PGSIZE);
   new_proc->tf->eax = 0;  // return 0 to child
   uint const cur_proc_esp_offset = cur_proc->ustack - cur_proc->tf->esp;
   new_proc->tf->esp = new_proc->ustack - cur_proc_esp_offset;
+  
   new_proc->cwd = cur_proc->cwd;
   safestrcpy(new_proc->name, cur_proc->name, sizeof(cur_proc->name));
   pid = new_proc->pid;
