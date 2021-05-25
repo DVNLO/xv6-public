@@ -560,7 +560,7 @@ clone(void * stack, int size)
   cprintf("clone : ustack[2] = %p\n", ustack[2]);
   new_proc->tf->ebp = (uint)(stack) + (uint)(size);
   new_proc->tf->esp = (uint)(stack);
-  new_proc->tf->eip = ustack[2];
+  new_proc->tf->eip = ustack[0];
   uint i;
   for(i = 0; i < NOFILE; i++)
     if(cur_proc->ofile[i])
@@ -603,10 +603,10 @@ thread_create(void * (*start_routine)(void*), void * arg)
   // use second page as user stack
   bp = sz;
   cprintf("thread_create : bp = %p\n", bp);
-  uint ustack[3];
-  ustack[0] = 0xffffffff;
+  uint ustack[1];
+  // build user stack
+  ustack[0] = (uint)(start_routine);
   ustack[1] = (uint)(arg);
-  ustack[2] = (uint)(start_routine);
   sp = bp - sizeof(ustack);
   cprintf("thread_create : sp = %p\n", sp);
   int rc;
