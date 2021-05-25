@@ -596,10 +596,12 @@ thread_create(void * (*start_routine)(void*), void * arg)
   uint sp;  // stack pointer
   // use second page as user stack
   bp = sz;
+  cprintf("thread_create : bp = %d\n", bp);
   uint ustack[2];
   ustack[0] = (uint)(start_routine);
   ustack[1] = (uint)(arg);
   sp = bp - sizeof(ustack);
+  cprintf("thread_create : sp = %d\n", sp);
   int rc;
   rc = copyout(cur_proc->pgdir, sp, (void *)(ustack), sizeof(ustack));
   if(rc < 0)
