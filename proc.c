@@ -557,7 +557,6 @@ clone(void * stack, int size)
   cprintf("clone : stack + size = %p\n", (uint)(stack) + (uint)(size));
   cprintf("clone : ustack[0] = %p\n", ustack[0]);
   cprintf("clone : ustack[1] = %p\n", ustack[1]);
-  cprintf("clone : ustack[2] = %p\n", ustack[2]);
   new_proc->tf->ebp = (uint)(stack) + (uint)(size);
   new_proc->tf->esp = (uint)(stack);
   new_proc->tf->eip = ustack[0];
