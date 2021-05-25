@@ -560,7 +560,6 @@ clone(void * stack, int size)
   {
     return -1;
   }
-  sp = sz;
   new_proc->pgdir = cur_proc->pgdir;
   new_proc->sz = cur_proc->sz;
   new_proc->parent = cur_proc;
