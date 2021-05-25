@@ -115,7 +115,7 @@ main(int argc, char * argv[])
     for(int i = 0; i < player_count; ++i)
     {
         player_t * current_player = &players[i];
-        int rc = thread_create(play_frisbee, (void *)(current_player));
+        thread_create(play_frisbee, (void *)(current_player));
     }
     wait();
     exit();
