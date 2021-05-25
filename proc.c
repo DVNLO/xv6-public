@@ -551,9 +551,14 @@ clone(void * stack, int size)
   new_proc->parent = cur_proc;
   *new_proc->tf = *cur_proc->tf;
   new_proc->tf->eax = 0;  // return 0 in child
-  new_proc->tf->ebp = (uint)(stack) + size;
-  new_proc->tf->esp = (uint)(stack);
-  new_proc->tf->eip = ((uint *)(stack))[0];
+  uint * ustack = (uint *)(stack);
+  cprintf("clone : stack = %p\n", stack);
+  cprintf("clone : size = %d\n", size);
+  cprintf("clone : ustack[0] = %p\n", ustack[0]);
+  cprintf("clone : ustack[1] = %p\n", ustack[1]);
+  new_proc->tf->ebp = &ustack[1];
+  new_proc->tf->esp = &ustack[0];
+  new_proc->tf->eip = ustack[0];
   new_proc->cwd = cur_proc->cwd;
   safestrcpy(new_proc->name, cur_proc->name, sizeof(cur_proc->name));
   pid = new_proc->pid;
