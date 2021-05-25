@@ -125,8 +125,10 @@ main(int argc, char * argv[])
     {
         lock_t * const lk = get_lock(&frisbee);
         lock_acquire(lk);
+        printf(1, "main : lock acquired\n");
         if(!is_game_on(&frisbee))
         {
+            printf(1, "main : game over\n");
             break;
         }
         lock_release(lk);
