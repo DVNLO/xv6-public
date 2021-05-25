@@ -9,6 +9,12 @@
         "types.h": "c",
         "spinlock.h": "c",
         "game.h": "c",
-        "lock.h": "c"
+        "lock.h": "c",
+        "user.h": "c",
+        "stat.h": "c",
+        "mmu.h": "c",
+        "utility.h": "c",
+        "player.h": "c",
+        "fcntl.h": "c"
     }
 }

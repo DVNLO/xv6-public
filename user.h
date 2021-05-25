@@ -1,4 +1,3 @@
-struct lock_t;
 struct stat;
 struct rtcdate;
 
