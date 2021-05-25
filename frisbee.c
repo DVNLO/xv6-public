@@ -120,8 +120,15 @@ main(int argc, char * argv[])
     }
     while(true)
     {
+        lock_t * const lk = get_lock(&frisbee);
+        lock_acquire(lk);
+        if(!is_game_on(&frisbee))
+        {
+            lock_release(lk);
+            break;
+        }
+        lock_release(lk);
         sleep(1);
-        continue;
     }
     exit();
 }
