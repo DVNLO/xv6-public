@@ -1,6 +1,7 @@
 #include "types.h"
 
 #include "mmu.h"
+#include "spinlock.h"
 #include "stat.h"
 #include "user.h"
 
@@ -134,7 +135,7 @@ main(int argc, char * argv[])
 }
 
 /*
-void * 
+void *
 start(void * arg)
 {
     uint * val = (uint *)(arg);
