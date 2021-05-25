@@ -556,9 +556,9 @@ clone(void * stack, int size)
   cprintf("clone : size = %d\n", size);
   cprintf("clone : ustack[0] = %p\n", ustack[0]);
   cprintf("clone : ustack[1] = %p\n", ustack[1]);
-  new_proc->tf->ebp = (uint)(stack) + size;
+  //new_proc->tf->ebp = (uint)(stack) + 8;
   new_proc->tf->esp = (uint)(stack);
-  new_proc->tf->eip = ustack[0];
+  new_proc->tf->eip = ustack[2];
   new_proc->cwd = cur_proc->cwd;
   safestrcpy(new_proc->name, cur_proc->name, sizeof(cur_proc->name));
   pid = new_proc->pid;
@@ -596,12 +596,13 @@ thread_create(void * (*start_routine)(void*), void * arg)
   uint sp;  // stack pointer
   // use second page as user stack
   bp = sz;
-  cprintf("thread_create : bp = %d\n", bp);
-  uint ustack[2];
-  ustack[0] = (uint)(start_routine);
+  cprintf("thread_create : bp = %p\n", bp);
+  uint ustack[3];
+  ustack[0] = 0xffffffff;
   ustack[1] = (uint)(arg);
+  ustack[2] = (uint)(start_routine);
   sp = bp - sizeof(ustack);
-  cprintf("thread_create : sp = %d\n", sp);
+  cprintf("thread_create : sp = %p\n", sp);
   int rc;
   rc = copyout(cur_proc->pgdir, sp, (void *)(ustack), sizeof(ustack));
   if(rc < 0)
