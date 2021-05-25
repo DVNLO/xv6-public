@@ -63,6 +63,7 @@ play_frisbee(void * arg)
             play_turn(player, frisbee);
         }
         lock_release(lk);
+        sleep(1);
     }
     exit();
     return 0; // for compiler
@@ -119,6 +120,7 @@ main(int argc, char * argv[])
     }
     while(true)
     {
+        sleep(1);
         continue;
     }
     exit();
