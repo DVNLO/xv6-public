@@ -52,7 +52,6 @@ play_frisbee(void * arg)
     while(true)
     {
         lock_t * const lk = get_lock(frisbee);
-        printf(1, "player : %d begin\n", get_player_id(player));
         lock_acquire(lk);
         if(!is_game_on(frisbee))
         {
@@ -63,10 +62,8 @@ play_frisbee(void * arg)
         {
             play_turn(player, frisbee);
         }
-        printf(1, "player : %d end\n", get_player_id(player));
         lock_release(lk);
     }
-    printf(1, "player : %d exit\n", get_player_id(player));
     exit();
     return 0; // for compiler
 }
@@ -124,21 +121,6 @@ main(int argc, char * argv[])
             printf(1, "unable to create player thread\n");
             exit();
         }
-    }
-    while(true)
-    {
-        lock_t * const lk = get_lock(&frisbee);
-        printf(1, "main : begin\n");
-        lock_acquire(lk);
-        if(!is_game_on(&frisbee))
-        {
-            printf(1, "main : game over\n");
-            lock_release(lk);
-            break;
-        }
-        lock_release(lk);
-        printf(1, "main : end\n");
-        sleep(player_count);
     }
     wait();
     exit();
