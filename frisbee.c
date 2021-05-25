@@ -4,6 +4,7 @@
 #include "spinlock.h"
 #include "stat.h"
 #include "user.h"
+#include "x86.h"
 
 #include "game.h"
 #include "lock.h"
