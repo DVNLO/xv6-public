@@ -132,6 +132,7 @@ main(int argc, char * argv[])
             break;
         }
         lock_release(lk);
+        sleep(player_count);
     }
     // wait for child threads to join
     exit();
