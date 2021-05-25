@@ -236,12 +236,6 @@ exit(void)
   if(curproc == initproc)
     panic("init exiting");
 
-  if(curproc->child_thread_count)
-  {
-    // wait for child threads
-    wait();
-  }
-
   // Close all open files.
   for(fd = 0; fd < NOFILE; fd++){
     if(curproc->ofile[fd]){
