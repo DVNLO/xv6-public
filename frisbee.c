@@ -56,6 +56,7 @@ play_frisbee(void * arg)
         lock_acquire(lk);
         if(!is_game_on(frisbee))
         {
+            lock_release(lk);
             break;
         }
         if(is_player_turn(player, frisbee))
@@ -132,6 +133,7 @@ main(int argc, char * argv[])
         if(!is_game_on(&frisbee))
         {
             printf(1, "main : game over\n");
+            lock_release(lk);
             break;
         }
         lock_release(lk);
