@@ -65,6 +65,7 @@ play_frisbee(void * arg)
         printf(1, "player : %d end\n", get_player_id(player));
         lock_release(lk);
     }
+    printf(1, "player : %d exit\n", get_player_id(player));
     exit();
     return 0; // for compiler
 }
@@ -130,11 +131,16 @@ main(int argc, char * argv[])
         lock_acquire(lk);
         if(!is_game_on(&frisbee))
         {
+            printf(1, "main : game over\n");
             break;
         }
         lock_release(lk);
         printf(1, "main : end\n");
         sleep(player_count);
+    }
+    while(true)
+    {
+        continue;
     }
     // wait for child threads to join
     exit();
