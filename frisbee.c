@@ -70,7 +70,7 @@ start(void * arg)
     uint * val = (uint *)(arg);
     while (true)
     {
-        printf(1, "start : val = %p\n", val);
+        printf(1, "start : val = %p\n", *val);
         sleep(5);
         continue;
     }
