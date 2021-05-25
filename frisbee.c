@@ -141,6 +141,10 @@ main(int argc, char * argv[])
         sleep(player_count);
     }
     // wait for child threads to join
+    while(true)
+    {
+        continue;
+    }
     exit();
 }
 
