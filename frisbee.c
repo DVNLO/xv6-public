@@ -70,6 +70,7 @@ void * start(void * arg)
     printf(1, "start : val = %d\n", val);
     while (true)
     {
+        sleep(5);
         continue;
     }
     exit();
@@ -85,6 +86,7 @@ main(int argc, char * argv[])
     printf(1, "rc : %d\n", rc);
     while (true)
     {
+        sleep(5);
         continue;
     }
     exit();
