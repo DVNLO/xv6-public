@@ -68,9 +68,9 @@ void *
 start(void * arg)
 {
     int * val = (int *)(arg);
-    printf(1, "start : val = %d\n", *val);
     while (true)
     {
+        printf(1, "start : val = %d\n", *val);
         sleep(5);
         continue;
     }
