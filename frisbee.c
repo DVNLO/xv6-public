@@ -52,6 +52,7 @@ play_frisbee(void * arg)
     while(true)
     {
         lock_t * const lk = get_lock(frisbee);
+        printf(1, "player : %d", get_player_id(player));
         lock_acquire(lk);
         if(!is_game_on(frisbee))
         {
@@ -124,11 +125,10 @@ main(int argc, char * argv[])
     while(true)
     {
         lock_t * const lk = get_lock(&frisbee);
+        printf(1, "main : ");
         lock_acquire(lk);
-        printf(1, "main : lock acquired\n");
         if(!is_game_on(&frisbee))
         {
-            printf(1, "main : game over\n");
             break;
         }
         lock_release(lk);
