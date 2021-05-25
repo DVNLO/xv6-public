@@ -13,7 +13,7 @@ OBJS = \
 	main.o\
 	mp.o\
 	picirq.o\
-	pipe.o\	
+	pipe.o\
 	proc.o\
 	sleeplock.o\
 	spinlock.o\
@@ -143,7 +143,7 @@ tags: $(OBJS) entryother.S _init
 vectors.S: vectors.pl
 	./vectors.pl > vectors.S
 
-ULIB = ulib.o usys.o printf.o umalloc.o lock.o
+ULIB = ulib.o usys.o printf.o umalloc.o
 
 _%: %.o $(ULIB)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
