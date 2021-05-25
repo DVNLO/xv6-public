@@ -100,8 +100,8 @@ exec(char *path, char **argv)
   curproc->sz = sz;
   curproc->tf->eip = elf.entry;  // main
   uint const final_stack_pointer = sp;
-  cprint("initial_stack_pointer : %p\n", initial_stack_pointer);
-  cprint("final_stack_pointer : %p\n", final_stack_pointer);
+  cprintf("exec : initial_stack_pointer : %p\n", initial_stack_pointer);
+  cprintf("exec : final_stack_pointer : %p\n", final_stack_pointer);
   curproc->tf->esp = sp;
   switchuvm(curproc);
   freevm(oldpgdir);
