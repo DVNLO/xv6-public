@@ -560,8 +560,9 @@ clone(void * stack, int size)
   uint const new_stack_end = (uint)(stack) - 1;
   uint const new_stack_begin = new_stack_end + size;
   new_proc->ustack = new_stack_begin;
-  memmove(V2P(new_proc->ustack - PGSIZE + 1), 
-          V2P(cur_proc->ustack - PGSIZE + 1), PGSIZE);
+  memmove((void *)(V2P(new_proc->ustack - PGSIZE + 1)), 
+          (void *)(V2P(cur_proc->ustack - PGSIZE + 1)), 
+          PGSIZE);
   new_proc->tf->eax = 0;  // return 0 to child
   uint const cur_proc_esp_offset = cur_proc->ustack - cur_proc->tf->esp;
   new_proc->tf->esp = new_proc->ustack - cur_proc_esp_offset;
