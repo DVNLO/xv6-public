@@ -617,10 +617,6 @@ thread_create(void * (*start_routine)(void*), void * arg)
     return -1;
   }
   rc = clone((void *)(sp), sizeof(ustack));
-  if(rc > 0)
-  {
-    cur_proc->child_thread_cnt += 1;
-  }
   //cprintf("thread_create end\n");
   return rc;
 }
