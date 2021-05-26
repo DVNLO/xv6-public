@@ -20,7 +20,7 @@ lock_acquire(lock_t * const lk)
 {
     while(xchg(&lk->is_locked, 1) != 0)
     {
-        continue;
+        sleep(1);
     }
 }
 

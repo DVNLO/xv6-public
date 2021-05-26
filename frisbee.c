@@ -63,7 +63,6 @@ play_frisbee(void * arg)
             play_turn(player, frisbee);
         }
         lock_release(lk);
-        sleep(1);
     }
     exit();
     return 0; // for compiler
