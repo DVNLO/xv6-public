@@ -62,12 +62,12 @@ play_frisbee(void * arg)
         {
             break;
         }
+        lock_acquire(lk);
         if(is_player_turn(player, frisbee))
         {
-            lock_acquire(lk);
             play_turn(player, frisbee);
-            lock_release(lk);
         }
+        lock_release(lk);
     }
     exit();
     return 0; // for compiler
