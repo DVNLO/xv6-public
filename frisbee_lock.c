@@ -23,6 +23,12 @@ is_game_on(game_t * const frisbee)
     return get_turn_count(frisbee) < get_max_turn_count(frisbee);
 }
 
+void
+end_game(game_t * const frisbee)
+{
+    set_turn_count(frisbee, get_max_turn_count(frisbee));
+}
+
 int
 is_player_turn(player_t const * const player, game_t * const frisbee)
 {
@@ -115,7 +121,16 @@ main(int argc, char * argv[])
     for(int i = 0; i < player_count; ++i)
     {
         player_t * current_player = &players[i];
-        thread_create(play_frisbee, (void *)(current_player));
+        int rc = thread_create(play_frisbee, (void *)(current_player));
+        if(rc < 0)
+        {
+            printf(1, "unable to create player thread; ending game\n");
+            lock_t * lk = get_lock(&frisbee);
+            lock_acquire(lk);
+            end_game(&frisbee);
+            lock_release(lk);
+            break;
+        }
     }
     // wait for all children to exit
     while(wait() != -1)

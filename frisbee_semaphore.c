@@ -115,7 +115,16 @@ main(int argc, char * argv[])
     for(int i = 0; i < player_count; ++i)
     {
         player_t * current_player = &players[i];
-        thread_create(play_frisbee, (void *)(current_player));
+        int rc = thread_create(play_frisbee, (void *)(current_player));
+        if(rc < 0)
+        {
+            printf(1, "unable to create player thread; ending game\n");
+            semaphore_t * s = get_semaphore(&frisbee);
+            semaphore_wait(s);
+            end_game(&frisbee);
+            semaphore_release(s);
+            break;
+        }
     }
     // wait for all children to exit
     while(wait() != -1)
