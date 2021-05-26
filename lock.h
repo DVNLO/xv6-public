@@ -29,10 +29,7 @@ void
 lock_release(lock_t * const lk)
 {
     uint const unlock = 0U;
-    while(xchg(&lk->is_locked, unlock))
-    {
-        continue;
-    }
+    lk->is_locked = unlock;
 }
 
 #endif
