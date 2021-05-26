@@ -16,7 +16,7 @@ void
 lock_acquire(lock_t * const lk)
 {
     uint const locked = 1U;
-    while(!xchg(&lk->is_locked, locked))
+    while(xchg(&lk->is_locked, locked) != 0)
     {
         continue;
     }
