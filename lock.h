@@ -20,14 +20,14 @@ lock_acquire(lock_t * const lk)
     {
         continue;
     }
-    __sync_synchronize();   // see spinlock.c
+    __sync_synchronize(); // see spinlock.c
 }
 
 void
 lock_release(lock_t * const lk)
 {
+    __sync_synchronize(); // see spinlock.c
     uint const unlock = 0U;
-    __sync_synchronize();   // see spinlock.c
     xchg(&lk->is_locked, unlock);
 }
 
