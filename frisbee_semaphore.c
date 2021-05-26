@@ -120,6 +120,7 @@ main(int argc, char * argv[])
         set_game(current_player, &frisbee);
     }
     // spawn child threads
+    semaphore_wait(game_semaphore);  // hold child threads
     for(int i = 0; i < player_count; ++i)
     {
         player_t * current_player = &players[i];
@@ -127,13 +128,11 @@ main(int argc, char * argv[])
         if(rc < 0)
         {
             printf(1, "unable to create player thread; ending game\n");
-            semaphore_t * s = get_semaphore(&frisbee);
-            semaphore_wait(s);
             end_game(&frisbee);
-            semaphore_release(s);
             break;
         }
     }
+    semaphore_release(game_semaphore);   // release child threads
     // wait for all children to exit
     while(wait() != -1)
     {
