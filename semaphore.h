@@ -20,11 +20,11 @@ semaphore_wait(semaphore_t * const s)
     do
     {
         initial_count = s->count;
+        final_count = initial_count - 1;
         if(!initial_count)
         {
             continue; // resource unavailable
         }
-        final_count = initial_count - 1;
     }
     while(xchg(&s->count, final_count) != initial_count);
 }
