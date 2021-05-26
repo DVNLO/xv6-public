@@ -5,13 +5,15 @@ struct lock_t;
 
 typedef struct
 {
-    lock_t * lk;
+    lock_t * lk; // wait lock
     volatile uint count;
 } semaphore_t;
 
 void
 semaphore_init(semaphore_t * const s, uint const count_val)
 {
+    s->lk = malloc(sizeof(lock_t));
+    lock_init(s->lk);
     s->count = count_val;
 }
 
