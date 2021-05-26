@@ -58,17 +58,18 @@ play_frisbee(void * arg)
     lock_t * const lk = get_lock(frisbee);
     while(true)
     {
+        lock_acquire(lk);
         if(!is_game_on(frisbee))
         {
             break;
         }
-        lock_acquire(lk);
         if(is_player_turn(player, frisbee))
         {
             play_turn(player, frisbee);
         }
         lock_release(lk);
     }
+    lock_release(lk);
     exit();
     return 0; // for compiler
 }
