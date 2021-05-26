@@ -20,6 +20,7 @@ lock_acquire(lock_t * const lk)
     {
         continue;
     }
+    __sync_synchronize();   // see spinlock.c
 }
 
 void
