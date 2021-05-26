@@ -36,14 +36,13 @@ void
 semaphore_release(semaphore_t * const s)
 {
     __sync_synchronize(); // see spinlock.c
-    uint initial_count;
-    uint final_count;
-    do
+    uint initial_count = s->count;
+    uint final_count = initial_count + 1;
+    while(xchg(&s->count, final_count) != initial_count)
     {
         initial_count = s->count;
         final_count = initial_count + 1;
     }
-    while(xchg(&s->count, final_count) != initial_count);
 }
 
 #endif
