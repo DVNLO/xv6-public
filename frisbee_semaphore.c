@@ -3,6 +3,7 @@
 #include "mmu.h"
 #include "stat.h"
 #include "user.h"
+#include "x86.h"
 
 #include "game.h"
 #include "lock.h"
@@ -95,7 +96,7 @@ main(int argc, char * argv[])
         printf(1, "unable to malloc game semaphore\n");
         exit();
     }
-    semaphore_init(game_semaphore, 1);  // use binary semaphore
+    semaphore_init(game_semaphore, 1); // use binary semaphore
     set_semaphore(&frisbee, game_semaphore);
     // construct players
     player_t * players = malloc(sizeof(player_t) * get_player_count(&frisbee));

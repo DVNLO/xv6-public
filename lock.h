@@ -1,9 +1,6 @@
 #ifndef LOCK_H
 #define LOCK_H
 
-#include "types.h"
-#include "x86.h"
-
 typedef struct
 {
     volatile uint is_locked;
