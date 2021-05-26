@@ -41,7 +41,9 @@ play_turn(player_t const * const player, game_t * const frisbee)
     int const current_turn_count = get_turn_count(frisbee);
     int const current_player_id = get_player_id(player);
     int const next_player_id
-        = (current_player_id + 1) % get_player_count(frisbee);
+        = (current_player_id + 1) < get_player_count(frisbee)
+              ? (current_player_id + 1)
+              : 0;
     printf(1,
            "Pass number no: %d, Thread %d is passing the token to thread %d\n",
            current_turn_count, current_player_id, next_player_id);
@@ -118,7 +120,7 @@ main(int argc, char * argv[])
         set_game(current_player, &frisbee);
     }
     // spawn child threads
-    lock_acquire(game_lk);  // hold child threads
+    lock_acquire(game_lk); // hold child threads
     for(int i = 0; i < player_count; ++i)
     {
         player_t * current_player = &players[i];
@@ -130,7 +132,7 @@ main(int argc, char * argv[])
             break;
         }
     }
-    lock_release(game_lk);  // release child threads
+    lock_release(game_lk); // release child threads
     // wait for all children to exit
     while(wait() != -1)
     {
