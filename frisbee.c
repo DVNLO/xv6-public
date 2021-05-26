@@ -118,6 +118,7 @@ main(int argc, char * argv[])
         player_t * current_player = &players[i];
         thread_create(play_frisbee, (void *)(current_player));
     }
+    /*
     while(true)
     {
         lock_t * const lk = get_lock(&frisbee);
@@ -130,6 +131,7 @@ main(int argc, char * argv[])
         lock_release(lk);
         sleep(1);
     }
+    */
     wait();
     exit();
 }
