@@ -23,6 +23,12 @@ is_game_on(game_t * const frisbee)
     return get_turn_count(frisbee) < get_max_turn_count(frisbee);
 }
 
+void
+end_game(game_t * const frisbee)
+{
+    set_turn_count(frisbee, get_max_turn_count(frisbee));
+}
+
 int
 is_player_turn(player_t const * const player, game_t * const frisbee)
 {
