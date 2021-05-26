@@ -1,7 +1,6 @@
 #include "types.h"
 
 #include "mmu.h"
-#include "spinlock.h"
 #include "stat.h"
 #include "user.h"
 
@@ -14,7 +13,7 @@
 void
 usage()
 {
-    printf(1, "frisbee [player count] [max pass count]\n");
+    printf(1, "frisbee_lock [player count] [max pass count]\n");
 }
 
 int

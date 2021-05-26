@@ -1,6 +1,7 @@
 #ifndef GAME_H
 #define GAME_H
 #include "lock.h"
+#include "semaphore.h"
 
 typedef struct
 {
@@ -9,6 +10,7 @@ typedef struct
     int turn_count;
     int max_turn_count;
     lock_t * lk;
+    semaphore_t * s;
 } game_t;
 
 int
@@ -69,6 +71,18 @@ void
 set_lock(game_t * const game, lock_t * const lk_val)
 {
     game->lk = lk_val;
+}
+
+semaphore_t *
+get_semaphore(game_t const * const game)
+{
+    return game->s;
+}
+
+void
+set_semaphore(game_t * const game, semaphore_t * const s_val)
+{
+    game->s = s_val;
 }
 
 #endif // GAME_H

@@ -169,7 +169,8 @@ UPROGS=\
 	_cat\
 	_echo\
 	_forktest\
-	_frisbee\
+	_frisbee_lock\
+	_frisbee_semaphore\
 	_grep\
 	_init\
 	_kill\
