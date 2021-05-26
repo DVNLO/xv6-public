@@ -88,8 +88,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-  p->is_thread = 0;
-  p->child_thread_count = 0;
+  p->thread_count = 0;
   p->parent = 0;
 
   release(&ptable.lock);
