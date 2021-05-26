@@ -57,9 +57,9 @@ play_frisbee(void * arg)
 {
     player_t * const player = (player_t *)(arg);
     game_t * const frisbee = get_game(player);
+    semaphore_t * const s = get_semaphore(frisbee);
     while(true)
     {
-        semaphore_t * const s = get_semaphore(frisbee);
         semaphore_wait(s);
         if(!is_game_on(frisbee))
         {
