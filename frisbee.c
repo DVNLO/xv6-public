@@ -117,7 +117,11 @@ main(int argc, char * argv[])
         player_t * current_player = &players[i];
         thread_create(play_frisbee, (void *)(current_player));
     }
-    wait();
+    // wait for all children to exit
+    while(wait() != -1)
+    {
+        sleep(1);
+    }
     exit();
 }
 
