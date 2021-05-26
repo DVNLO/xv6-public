@@ -90,6 +90,7 @@ found:
   p->pid = nextpid++;
   p->is_thread = 0;
   p->child_thread_count = 0;
+  p->parent = 0;
 
   release(&ptable.lock);
 
@@ -236,7 +237,7 @@ exit(void)
   if(curproc == initproc)
     panic("init exiting");
 
-  if(!curproc->is_thread)
+  if(!curproc->thread_count)
   {
     // Close all open files.
     for(fd = 0; fd < NOFILE; fd++){
@@ -254,9 +255,9 @@ exit(void)
 
   acquire(&ptable.lock);
   cprintf("exit : %s, %d\n", curproc->name, curproc->pid);
-  if(curproc->is_thread)
+  if(curproc->parent->thread_count > 0)
   {
-    curproc->parent->child_thread_count -= 1;
+    curproc->parent->thread_count -= 1;
   }
 
   // Parent might be sleeping in wait().
@@ -299,8 +300,10 @@ wait(void)
         pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
-        freevm(p->pgdir);
-        p->pgdir = 0;
+        if(p->pgdir != curproc->pgdir)
+        {
+          freevm(p->pgdir);
+        }
         p->pid = 0;
         p->parent = 0;
         p->name[0] = 0;
@@ -564,7 +567,6 @@ clone(void * stack, int size)
   new_proc->tf->ebp = (uint)(stack) + (uint)(size);
   new_proc->tf->esp = (uint)(stack);
   new_proc->tf->eip = ustack[0];
-  new_proc->is_thread = 1;
   for(uint i = 0; i < NOFILE; i++)
     if(cur_proc->ofile[i])
       new_proc->ofile[i] = cur_proc->ofile[i];
