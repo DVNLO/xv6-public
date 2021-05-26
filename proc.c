@@ -88,7 +88,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-  p->thread_count = 0;
+  p->is_thread = 0;
   p->parent = 0;
 
   release(&ptable.lock);
@@ -236,7 +236,7 @@ exit(void)
   if(curproc == initproc)
     panic("init exiting");
 
-  if(!curproc->thread_count)
+  if(!curproc->is_thread)
   {
     // Close all open files.
     for(fd = 0; fd < NOFILE; fd++){
@@ -254,10 +254,6 @@ exit(void)
 
   acquire(&ptable.lock);
   cprintf("exit : %s, %d\n", curproc->name, curproc->pid);
-  if(curproc->parent->thread_count > 0)
-  {
-    curproc->parent->thread_count -= 1;
-  }
 
   // Parent might be sleeping in wait().
   wakeup1(curproc->parent);
@@ -299,7 +295,7 @@ wait(void)
         pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
-        if(p->pgdir != curproc->pgdir)
+        if(!p->is_thread)
         {
           freevm(p->pgdir);
         }
@@ -570,6 +566,7 @@ clone(void * stack, int size)
     if(cur_proc->ofile[i])
       new_proc->ofile[i] = cur_proc->ofile[i];
   new_proc->cwd = cur_proc->cwd;
+  new_proc->is_thread = 1;
   safestrcpy(new_proc->name, cur_proc->name, sizeof(cur_proc->name));
   pid = new_proc->pid;
   acquire(&ptable.lock);
@@ -614,9 +611,5 @@ thread_create(void * (*start_routine)(void*), void * arg)
     return -1;
   }
   rc = clone((void *)(sp), sizeof(ustack));
-  if(rc > 0)
-  {
-    cur_proc->thread_count += 1;
-  }
   return rc;
 }
