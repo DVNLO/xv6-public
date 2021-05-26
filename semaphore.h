@@ -19,6 +19,7 @@ semaphore_wait(semaphore_t * const s)
     uint final_count;
     do
     {
+        sleep(1);
         initial_count = s->count;
         final_count = initial_count - 1;
         if(!initial_count)
