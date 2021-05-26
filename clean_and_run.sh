@@ -1,2 +1,2 @@
 #! /bin/bash
-make clean && make -j 12 qemu-nox CPUS=1 ;
+make clean && make -j 12 qemu-nox CPUS=2 ;
