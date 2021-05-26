@@ -16,26 +16,18 @@ void
 lock_acquire(lock_t * const lk)
 {
     uint const locked = 1U;
-    uint i = 0;
-    uint j = 32;
     while(xchg(&lk->is_locked, locked) != 0)
     {
-        for(i = 0; i < j; ++i)
-        {
-            continue;
-        }
-        j *= 2; // exponential backoff
         continue;
     }
-    __sync_synchronize();   // see spinlock.c
-    i += 1; // confuse compiler
-    j += 1;
+    __sync_synchronize();
 }
 
 void
 lock_release(lock_t * const lk)
 {
     uint const unlock = 0U;
+    __sync_synchronize();
     xchg(&lk->is_locked, unlock);
 }
 
