@@ -244,7 +244,6 @@ exit(void)
 
   if(!curproc->is_thread)
   {
-
     // Close all open files.
     for(fd = 0; fd < NOFILE; fd++){
       if(curproc->ofile[fd]){
@@ -260,7 +259,6 @@ exit(void)
   }
 
   acquire(&ptable.lock);
-  cprintf("exit : %s, %d\n", curproc->name, curproc->pid);
 
   // Parent might be sleeping in wait().
   wakeup1(curproc->parent);
