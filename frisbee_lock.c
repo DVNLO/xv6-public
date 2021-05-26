@@ -118,6 +118,7 @@ main(int argc, char * argv[])
         set_game(current_player, &frisbee);
     }
     // spawn child threads
+    lock_acquire(game_lk);  // hold child threads
     for(int i = 0; i < player_count; ++i)
     {
         player_t * current_player = &players[i];
@@ -125,13 +126,11 @@ main(int argc, char * argv[])
         if(rc < 0)
         {
             printf(1, "unable to create player thread; ending game\n");
-            lock_t * lk = get_lock(&frisbee);
-            lock_acquire(lk);
             end_game(&frisbee);
-            lock_release(lk);
             break;
         }
     }
+    lock_release(game_lk);  // release child threads
     // wait for all children to exit
     while(wait() != -1)
     {
