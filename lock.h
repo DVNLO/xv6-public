@@ -27,7 +27,7 @@ lock_acquire(lock_t * const lk)
 void
 lock_release(lock_t * const lk)
 {
-    xchg(&lk->is_locked, 0);
+    lk->is_locked = 0;
 }
 
 #endif
