@@ -63,6 +63,7 @@ play_frisbee(void * arg)
         lock_acquire(lk);
         if(!is_game_on(frisbee))
         {
+            lock_release(lk);
             break;
         }
         if(is_player_turn(player, frisbee))
@@ -71,7 +72,6 @@ play_frisbee(void * arg)
         }
         lock_release(lk);
     }
-    lock_release(lk);
     exit();
     return 0; // for compiler
 }
