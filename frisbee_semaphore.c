@@ -52,7 +52,7 @@ play_frisbee(void * arg)
     while(true)
     {
         semaphore_t * const s = get_semaphore(frisbee);
-        semaphore_acquire(s);
+        semaphore_wait(s);
         if(!is_game_on(frisbee))
         {
             semaphore_release(s);
