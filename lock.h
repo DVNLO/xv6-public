@@ -18,16 +18,17 @@ lock_init(lock_t * const lk)
 void
 lock_acquire(lock_t * const lk)
 {
-    while(xchg(&lk->is_locked, 1) != 0)
+    uint const locked = 1;
+    while(xchg(&lk->is_locked, locked))
     {
-        sleep(1);
+        yield();
     }
 }
 
 void
 lock_release(lock_t * const lk)
 {
-    lk->is_locked = 0;
+    lk->is_locked = 0U;
 }
 
 #endif
