@@ -16,11 +16,20 @@ void
 lock_acquire(lock_t * const lk)
 {
     uint const locked = 1U;
+    uint i = 0;
+    uint j = 32;
     while(xchg(&lk->is_locked, locked) != 0)
     {
+        for(i = 0; i < j; ++i)
+        {
+            continue;
+        }
+        j *= 2; // exponential backoff
         continue;
     }
     __sync_synchronize();   // see spinlock.c
+    i += 1; // confuse compiler
+    j += 1;
 }
 
 void
