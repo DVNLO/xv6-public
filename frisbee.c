@@ -120,7 +120,7 @@ main(int argc, char * argv[])
     // wait for all children to exit
     while(wait() != -1)
     {
-        sleep(1);
+        sleep(player_count);
     }
     exit();
 }
