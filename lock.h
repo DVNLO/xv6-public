@@ -6,7 +6,7 @@
 
 typedef struct
 {
-    uint is_locked;
+    volatile uint is_locked;
 } lock_t;
 
 void
