@@ -55,20 +55,19 @@ play_frisbee(void * arg)
 {
     player_t * const player = (player_t *)(arg);
     game_t * const frisbee = get_game(player);
+    lock_t * const lk = get_lock(frisbee);
     while(true)
     {
-        lock_t * const lk = get_lock(frisbee);
-        lock_acquire(lk);
         if(!is_game_on(frisbee))
         {
-            lock_release(lk);
             break;
         }
         if(is_player_turn(player, frisbee))
         {
+            lock_acquire(lk);
             play_turn(player, frisbee);
+            lock_release(lk);
         }
-        lock_release(lk);
     }
     exit();
     return 0; // for compiler
