@@ -121,7 +121,6 @@ main(int argc, char * argv[])
     }
     // spawn child threads
     semaphore_wait(game_semaphore);  // hold child threads
-    printf(1, "game_semaphore : count %d\n", game_semaphore->count);
     for(int i = 0; i < player_count; ++i)
     {
         player_t * current_player = &players[i];
