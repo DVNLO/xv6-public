@@ -12,3 +12,5 @@ For example, to play a game of frisbee with 4 players and 8 passes using the loc
 ```
 $ frisbee_lock 4 8
 ```
+## How to clean and run xv6
+I wrote a small script `clean_and_run.sh` which will clean the repository, build, and run xv6. As submitted it is configured to build with 2 CPU's.
